@@ -52,10 +52,6 @@ public final class App extends Application {
 	{
 		Instance = this;
 	}
-	/**
-	 * Times that the AdMob shown before, it under App-process domain. When process killed, it recounts
-	 */
-	private int mAdsShownTimes;
 
 	@Override
 	public void onCreate() {
