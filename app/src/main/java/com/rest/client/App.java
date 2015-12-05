@@ -74,6 +74,29 @@ public final class App extends Application {
 															  .build();
 		GcmNetworkManager.getInstance( cxt )
 						 .schedule( scheduleTask );
+
+
+//		Calendar notifyTime = Calendar.getInstance();
+//		notifyTime.add(
+//				Calendar.MINUTE,
+//				2
+//		);
+//		long   current = System.currentTimeMillis();
+//		long   nextFireWindow = (notifyTime.getTimeInMillis() - current) / 1000;
+//		long   flexSecs       = 30L; // the task can run as early as 10 minutes from the scheduled time
+//		String tag            = System.currentTimeMillis() + "";
+//		OneoffTask onceTask = new OneoffTask.Builder().setService( AppGuardService.class )
+//													  .setExecutionWindow(
+//															  nextFireWindow + flexSecs,
+//															  nextFireWindow + flexSecs * 2
+//													  )
+//													  .setTag( tag )
+//													  .setPersisted( true )
+//													  .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
+//													  .setRequiresCharging( false )
+//													  .build();
+//		GcmNetworkManager.getInstance( cxt )
+//						 .schedule( onceTask );
 	}
 
 }
