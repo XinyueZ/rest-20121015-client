@@ -57,13 +57,13 @@ public class MainActivity extends AppCompatActivity {
 						comment
 				);
 				mBinding.commentEt.setEnabled( false );
-				mBinding.fab.hide();
+
 
 				App.Instance.DB.addValueEventListener( new ValueEventListener() {
 					@Override
 					public void onDataChange( DataSnapshot dataSnapshot ) {
 						App.Instance.DB.removeEventListener( this );
-						mBinding.fab.show();
+
 						mBinding.commentEt.setEnabled( true );
 						Snackbar.make(
 								mBinding.rootView,
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
 					@Override
 					public void onCancelled( FirebaseError firebaseError ) {
 						App.Instance.DB.removeEventListener( this );
-						mBinding.fab.show();
+
 						mBinding.commentEt.setEnabled( true );
 						Snackbar.make(
 								mBinding.rootView,
