@@ -1,13 +1,19 @@
 package com.rest.client.ds;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
+
 public final class Client {
 
-	@com.google.gson.annotations.SerializedName("reqId")
+	@SerializedName("reqId")
+	@JsonProperty("reqId")
 	private String mReqId;
-	@com.google.gson.annotations.SerializedName("reqTime")
+	@SerializedName("reqTime")
+	@JsonProperty("reqTime")
 	private long   mReqTime;
-	@com.google.gson.annotations.SerializedName("comment")
+	@SerializedName("comment")
+	@JsonProperty("comment")
 	private String mComment;
 
 	public Client( String reqId, long reqTime, String comment ) {
@@ -16,27 +22,15 @@ public final class Client {
 		mComment = comment;
 	}
 
-	public void setMReqId( String mReqId ) {
-		this.mReqId = mReqId;
-	}
-
-	public void setMReqTime( long mReqTime ) {
-		this.mReqTime = mReqTime;
-	}
-
-	public void setMComment( String mComment ) {
-		this.mComment = mComment;
-	}
-
-	public String getMReqId() {
+	public String getReqId() {
 		return mReqId;
 	}
 
-	public long getMReqTime() {
+	public long getReqTime() {
 		return mReqTime;
 	}
 
-	public String getMComment() {
+	public String getComment() {
 		return mComment;
 	}
 }

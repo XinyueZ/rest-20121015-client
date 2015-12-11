@@ -2,69 +2,91 @@ package com.rest.client;
 
 import java.util.UUID;
 
+import android.databinding.DataBindingUtil;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 
-import com.rest.client.api.Api;
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
+import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.Client;
-import com.rest.client.ds.Response;
 
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
+	/**
+	 * Data-binding.
+	 */
+	private MainBinding mBinding;
+	/**
+	 * Main layout for this component.
+	 */
+	private static final int LAYOUT = R.layout.activity_main;
 
-	private Api mApi;
+	private void initComponents() {
+		mBinding = DataBindingUtil.setContentView(
+				this,
+				LAYOUT
+		);
+		setSupportActionBar( mBinding.toolbar );
+	}
+
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
-		setContentView( R.layout.activity_main );
-		Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
-		setSupportActionBar( toolbar );
-
-		Retrofit retrofit = new Retrofit.Builder().addConverterFactory( GsonConverterFactory.create() ).baseUrl( "http://rest-20121015.appspot.com/" )
-				.build();
-		mApi = retrofit.create( Api.class );
-
+		initComponents();
 		FloatingActionButton fab = (FloatingActionButton) findViewById( R.id.fab );
 		fab.setOnClickListener( new View.OnClickListener() {
 			@Override
 			public void onClick( View view ) {
-				final View                 rootView  = findViewById( R.id.root_view );
-				final FloatingActionButton fab       = (FloatingActionButton) findViewById( R.id.fab );
-				final EditText             commentEt = (EditText) findViewById( R.id.comment_et );
-				String                     uuid      = UUID.randomUUID().toString();
-				long                       time      = System.currentTimeMillis();
-				String                     comment   = Build.MODEL + "---" +  commentEt.getText().toString();
-				Client                     client    = new Client( uuid, time, comment );
-				Call<Response>             response  = mApi.getResponse( client );
-				commentEt.setEnabled( false );
-				fab.hide();
-				response.enqueue( new Callback<Response>() {
+				String uuid = UUID.randomUUID()
+								  .toString();
+				long time = System.currentTimeMillis();
+				String comment = Build.MODEL + "---" + mBinding.commentEt.getText()
+																		 .toString();
+				Client client = new Client(
+						uuid,
+						time,
+						comment
+				);
+				mBinding.commentEt.setEnabled( false );
+				mBinding.fab.hide();
+
+				App.Instance.DB.addValueEventListener( new ValueEventListener() {
 					@Override
-					public void onResponse( retrofit.Response<Response> response, Retrofit retrofit ) {
-						fab.show();
-						commentEt.setEnabled( true );
-						Snackbar.make( rootView, "Successfully.", Snackbar.LENGTH_SHORT ).show();
+					public void onDataChange( DataSnapshot dataSnapshot ) {
+						App.Instance.DB.removeEventListener( this );
+						mBinding.fab.show();
+						mBinding.commentEt.setEnabled( true );
+						Snackbar.make(
+								mBinding.rootView,
+								"Successfully.",
+								Snackbar.LENGTH_SHORT
+						).show();
 					}
+
 					@Override
-					public void onFailure( Throwable t ) {
-						fab.show();
-						commentEt.setEnabled( true );
-						Snackbar.make( rootView, "Failure.", Snackbar.LENGTH_SHORT ).show();
+					public void onCancelled( FirebaseError firebaseError ) {
+						App.Instance.DB.removeEventListener( this );
+						mBinding.fab.show();
+						mBinding.commentEt.setEnabled( true );
+						Snackbar.make(
+								mBinding.rootView,
+								"Failure.",
+								Snackbar.LENGTH_SHORT
+						).show();
 					}
 				} );
+				App.Instance.DB.child( client.getReqId() )
+							   .setValue( client );
+				App.Instance.DB.push();
 			}
 		} );
 	}
@@ -72,7 +94,10 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu ) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate( R.menu.menu_main, menu );
+		getMenuInflater().inflate(
+				R.menu.menu_main,
+				menu
+		);
 		return true;
 	}
 

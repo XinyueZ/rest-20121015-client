@@ -31,9 +31,13 @@
 
 package com.rest.client;
 
-import android.app.Application;
 import android.content.Context;
+import android.support.multidex.MultiDexApplication;
 
+import com.firebase.client.AuthData;
+import com.firebase.client.Firebase;
+import com.firebase.client.Firebase.AuthResultHandler;
+import com.firebase.client.FirebaseError;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 
@@ -43,7 +47,7 @@ import com.google.android.gms.gcm.PeriodicTask;
  *
  * @author Xinyue Zhao
  */
-public final class App extends Application {
+public final class App extends MultiDexApplication {
 	/**
 	 * Singleton.
 	 */
@@ -53,10 +57,30 @@ public final class App extends Application {
 		Instance = this;
 	}
 
+	private static String URL   = "https://rest-20121015.firebaseio.com";
+	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
+	public Firebase DB;
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		startAppGuardService( this );
+		Firebase.setAndroidContext(this);
+		DB = new Firebase( URL);
+		DB.authWithCustomToken(
+				AUTH,
+				new AuthResultHandler() {
+					@Override
+					public void onAuthenticated( AuthData authData ) {
+
+					}
+
+					@Override
+					public void onAuthenticationError( FirebaseError firebaseError ) {
+
+					}
+				}
+		);
 	}
 
 
@@ -76,27 +100,27 @@ public final class App extends Application {
 						 .schedule( scheduleTask );
 
 
-//		Calendar notifyTime = Calendar.getInstance();
-//		notifyTime.add(
-//				Calendar.MINUTE,
-//				2
-//		);
-//		long   current = System.currentTimeMillis();
-//		long   nextFireWindow = (notifyTime.getTimeInMillis() - current) / 1000;
-//		long   flexSecs       = 30L; // the task can run as early as 10 minutes from the scheduled time
-//		String tag            = System.currentTimeMillis() + "";
-//		OneoffTask onceTask = new OneoffTask.Builder().setService( AppGuardService.class )
-//													  .setExecutionWindow(
-//															  nextFireWindow + flexSecs,
-//															  nextFireWindow + flexSecs * 2
-//													  )
-//													  .setTag( tag )
-//													  .setPersisted( true )
-//													  .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
-//													  .setRequiresCharging( false )
-//													  .build();
-//		GcmNetworkManager.getInstance( cxt )
-//						 .schedule( onceTask );
+		//		Calendar notifyTime = Calendar.getInstance();
+		//		notifyTime.add(
+		//				Calendar.MINUTE,
+		//				2
+		//		);
+		//		long   current = System.currentTimeMillis();
+		//		long   nextFireWindow = (notifyTime.getTimeInMillis() - current) / 1000;
+		//		long   flexSecs       = 30L; // the task can run as early as 10 minutes from the scheduled time
+		//		String tag            = System.currentTimeMillis() + "";
+		//		OneoffTask onceTask = new OneoffTask.Builder().setService( AppGuardService.class )
+		//													  .setExecutionWindow(
+		//															  nextFireWindow + flexSecs,
+		//															  nextFireWindow + flexSecs * 2
+		//													  )
+		//													  .setTag( tag )
+		//													  .setPersisted( true )
+		//													  .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
+		//													  .setRequiresCharging( false )
+		//													  .build();
+		//		GcmNetworkManager.getInstance( cxt )
+		//						 .schedule( onceTask );
 	}
 
 }
