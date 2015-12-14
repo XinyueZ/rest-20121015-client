@@ -4,7 +4,7 @@ package com.rest.client.ds;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 
-public final class Client {
+public   class Client {
 
 	@SerializedName("reqId")
 	@JsonProperty("reqId")
@@ -15,6 +15,9 @@ public final class Client {
 	@SerializedName("comment")
 	@JsonProperty("comment")
 	private String mComment;
+
+	public Client() {
+	}
 
 	public Client( String reqId, long reqTime, String comment ) {
 		mReqId = reqId;

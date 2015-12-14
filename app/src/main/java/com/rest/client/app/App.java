@@ -29,7 +29,7 @@
 //                  奔驰宝马贵者趣，公交自行程序员。
 //                  别人笑我忒疯癫，我笑自己命太贱。
 
-package com.rest.client;
+package com.rest.client.app;
 
 import android.content.Context;
 import android.support.multidex.MultiDexApplication;
@@ -40,6 +40,7 @@ import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
+import com.rest.client.app.noactivities.AppGuardService;
 
 
 /**
@@ -57,16 +58,18 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private static String URL   = "https://rest-20121015.firebaseio.com";
+	public static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
 	public Firebase DB;
+	public boolean  DB_CONNECTED;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		startAppGuardService( this );
-		Firebase.setAndroidContext(this);
-		DB = new Firebase( URL);
+		Firebase.setAndroidContext( this );
+		DB = new Firebase( URL );
+		DB.keepSynced( true );
 		DB.authWithCustomToken(
 				AUTH,
 				new AuthResultHandler() {

@@ -1,4 +1,4 @@
-package com.rest.client;
+package com.rest.client.app.noactivities;
 
 
 import java.util.Random;
@@ -10,6 +10,7 @@ import android.util.Log;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
+import com.rest.client.app.App;
 import com.rest.client.ds.Client;
 
 public final class AppGuardService extends GcmTaskService {
