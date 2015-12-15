@@ -65,17 +65,15 @@ public class MainActivity extends AppCompatActivity {
 	public void onEvent( InsertClientEvent e ) {
 		Client client = e.getClient();
 
-		//PUT TO PENDING COLLECTION.
-		if( !App.Instance.DB_CONNECTED ) {
-			mRealm.beginTransaction();
-			ClientPending pending = new ClientPending(
-					client.getReqId(),
-					client.getReqTime(),
-					client.getComment()
-			);
-			mRealm.copyToRealm( pending );
-			mRealm.commitTransaction();
-		}
+		//TO PENDING QUEUE.
+		mRealm.beginTransaction();
+		ClientPending pending = new ClientPending(
+				client.getReqId(),
+				client.getReqTime(),
+				client.getComment()
+		);
+		mRealm.copyToRealm( pending );
+		mRealm.commitTransaction();
 
 		//SAVE ON SERVER.
 		save( client );
@@ -136,17 +134,19 @@ public class MainActivity extends AppCompatActivity {
 				);
 				Client serverData = snapshot.getValue( Client.class );
 				//CHECK FOR PENDING.
+				//PUT TO PENDING COLLECTION.
 				RealmResults<ClientPending> pendingObjects = mRealm.where( ClientPending.class )
 																   .equalTo(
 																		   "reqId",
 																		   serverData.getReqId()
 																   )
 																   .findAll();
+
+
 				ClientProxy proxy = new ClientProxy(
 						serverData,
-						pendingObjects.size() > 0 ? ClientProxy.NOT_SYNCED : ClientProxy.SYNCED
+						App.Instance.DB_CONNECTED || pendingObjects.size() == 0 ? ClientProxy.SYNCED  : ClientProxy.NOT_SYNCED
 				);
-
 				//FRESH SERVER DATA TO LOCAL.
 				mBinding.getAdapter()
 						.addData( proxy );
@@ -276,12 +276,20 @@ public class MainActivity extends AppCompatActivity {
 			public void onDataChange( DataSnapshot snapshot ) {
 				boolean connected = snapshot.getValue( Boolean.class );
 				if( connected ) {
+					boolean hasPending = mRealm.where( ClientPending.class )
+											   .count() > 0;
+					if( hasPending ) {
+						mRealm.beginTransaction();
+						mRealm.clear( ClientPending.class );
+						mRealm.commitTransaction();
+					}
 					int i = 0;
 					for( ClientProxy clientProxy : mBinding.getAdapter()
 														   .getData() ) {
-						if(clientProxy.getStatus() == ClientProxy.NOT_SYNCED) {
+						if( clientProxy.getStatus() == ClientProxy.NOT_SYNCED ) {
 							clientProxy.setStatus( ClientProxy.SYNCED );
-							mBinding.getAdapter().notifyItemChanged( i );
+							mBinding.getAdapter()
+									.notifyItemChanged( i );
 						}
 						i++;
 					}

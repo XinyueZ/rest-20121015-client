@@ -41,6 +41,7 @@ import com.firebase.client.FirebaseError;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
+import com.rest.client.app.noactivities.NetworkChangeReceiver;
 
 
 /**
@@ -66,6 +67,7 @@ public final class App extends MultiDexApplication {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		DB_CONNECTED = NetworkChangeReceiver.isNetworkAvailable(Instance);
 		startAppGuardService( this );
 		Firebase.setAndroidContext( this );
 		DB = new Firebase( URL );
