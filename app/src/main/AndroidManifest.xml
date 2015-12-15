@@ -33,7 +33,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".app.noactivities.NetworkChangeReceiver">
+        <receiver android:name=".rest.RestNetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />

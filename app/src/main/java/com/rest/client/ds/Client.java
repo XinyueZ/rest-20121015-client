@@ -3,8 +3,10 @@ package com.rest.client.ds;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
+import com.rest.client.rest.RestObject;
+import com.rest.client.rest.RestObjectProxy;
 
-public   class Client {
+public class Client implements RestObject {
 
 	@SerializedName("reqId")
 	@JsonProperty("reqId")
@@ -35,5 +37,11 @@ public   class Client {
 
 	public String getComment() {
 		return mComment;
+	}
+
+
+	@Override
+	public RestObjectProxy createProxy( RestObject restObject ) {
+		return new ClientProxy( restObject );
 	}
 }

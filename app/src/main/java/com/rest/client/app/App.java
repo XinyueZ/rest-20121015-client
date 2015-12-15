@@ -34,14 +34,11 @@ package com.rest.client.app;
 import android.content.Context;
 import android.support.multidex.MultiDexApplication;
 
-import com.firebase.client.AuthData;
-import com.firebase.client.Firebase;
-import com.firebase.client.Firebase.AuthResultHandler;
-import com.firebase.client.FirebaseError;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
-import com.rest.client.app.noactivities.NetworkChangeReceiver;
+import com.rest.client.ds.Client;
+import com.rest.client.rest.RestManager;
 
 
 /**
@@ -59,35 +56,19 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	public static String URL  = "https://rest-20121015.firebaseio.com";
-	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	public Firebase DB;
-	public boolean  DB_CONNECTED;
+	private RestManager mClientRestManager = new RestManager();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		DB_CONNECTED = NetworkChangeReceiver.isNetworkAvailable(Instance);
 		startAppGuardService( this );
-		Firebase.setAndroidContext( this );
-		DB = new Firebase( URL );
-		DB.keepSynced( true );
-		DB.authWithCustomToken(
-				AUTH,
-				new AuthResultHandler() {
-					@Override
-					public void onAuthenticated( AuthData authData ) {
-
-					}
-
-					@Override
-					public void onAuthenticationError( FirebaseError firebaseError ) {
-
-					}
-				}
-		);
+		mClientRestManager.init( this,
+								 Client.class);
 	}
 
+	public RestManager getClientRestManager() {
+		return mClientRestManager;
+	}
 
 	public static void startAppGuardService( Context cxt ) {
 		long   scheduleSec = 10800L;//

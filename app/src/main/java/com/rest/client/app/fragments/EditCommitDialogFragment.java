@@ -18,9 +18,6 @@ import android.widget.EditText;
 import com.rest.client.R;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
-import com.rest.client.events.InsertClientEvent;
-
-import de.greenrobot.event.EventBus;
 
 public final class EditCommitDialogFragment extends DialogFragment {
 	private EditText mCommentEt;
@@ -68,8 +65,7 @@ public final class EditCommitDialogFragment extends DialogFragment {
 																			   comment
 																	   );
 
-																	   EventBus.getDefault()
-																			   .post( new InsertClientEvent( client ) );
+																	   App.Instance.getClientRestManager().save( client );
 																	   dismiss();
 																   }
 															   }

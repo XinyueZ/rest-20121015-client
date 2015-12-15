@@ -49,9 +49,8 @@ public final class AppGuardService extends GcmTaskService {
 				time,
 				comment
 		);
-		App.Instance.DB.child( client.getReqId() )
-					   .setValue( client );
-		App.Instance.DB.push();
+		App.Instance.getClientRestManager()
+					.save( client );
 		return GcmNetworkManager.RESULT_SUCCESS;
 	}
 

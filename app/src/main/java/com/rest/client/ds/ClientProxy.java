@@ -1,41 +1,19 @@
 package com.rest.client.ds;
 
 
-public final class ClientProxy  extends Client{
-	public static final int NOT_SYNCED = 0;
-	public static final int SYNCED     = 1;
+import com.rest.client.rest.RestObject;
+import com.rest.client.rest.RestObjectProxy;
 
-	private Client mClient;
-	private int    mStatus;
-
-	public ClientProxy( Client client, int status ) {
-		mClient = client;
-		mStatus = status;
-	}
-
-
-	public String getReqId() {
-		return mClient.getReqId();
+public final class ClientProxy extends RestObjectProxy {
+	public ClientProxy( RestObject restObject ) {
+		super( restObject );
 	}
 
 	public long getReqTime() {
-		return mClient.getReqTime();
+		return ( (Client) getRestObject() ).getReqTime();
 	}
 
 	public String getComment() {
-		return mClient.getComment();
-	}
-
-	public int getStatus() {
-		return mStatus;
-	}
-
-
-	public void setStatus( int status ) {
-		mStatus = status;
-	}
-
-	public Client getClient() {
-		return mClient;
+		return ( (Client) getRestObject() ).getComment();
 	}
 }
