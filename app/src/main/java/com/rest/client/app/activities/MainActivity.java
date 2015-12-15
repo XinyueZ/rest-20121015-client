@@ -167,15 +167,6 @@ public class MainActivity extends AppCompatActivity {
 		return super.onOptionsItemSelected( item );
 	}
 
-
-	private void scrollToNotifiedPosition() {
-		LinearLayoutManager linearLayoutManager = (LinearLayoutManager) mBinding.responsesRv.getLayoutManager();
-		if( linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0 ) {
-			mBinding.responsesRv.getLayoutManager()
-								.scrollToPosition( 0 );
-		}
-	}
-
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
