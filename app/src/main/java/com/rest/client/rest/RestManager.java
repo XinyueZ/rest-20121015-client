@@ -21,24 +21,32 @@ import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
 public class RestManager implements AuthResultHandler, ChildEventListener {
-
+	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	private Firebase mDatabase;
+	private Firebase                    mDatabase;
 	/**
-	 * Local storage for storing pending queue.
+	 * Local storage for storing pending queue and back-off data.
 	 */
-	private Realm    mRealm;
-	private boolean  mConnected;
-
-	private Class<?> mRestClazz;
+	private Realm                       mRealm;
+	/**
+	 * The network connect status.
+	 */
+	private boolean                     mConnected;
+	/**
+	 * Meta class of {@link RestObject}.
+	 */
+	private Class<? extends RestObject> mRestClazz;
 
 	/**
 	 * Initialize the manager.
-	 * @param app {@link Application} The application domain to control manager.
-	 * @param clazz The meta class of rest object.
+	 *
+	 * @param app
+	 * 		{@link Application} The application domain to control manager.
+	 * @param clazz
+	 * 		The meta class of rest object.
 	 */
-	public void init( Application app, Class<?> clazz ) {
+	public void init( Application app, Class<? extends RestObject> clazz ) {
 		mRestClazz = clazz;
 		mRealm = Realm.getInstance( app );
 		mConnected = isNetworkAvailable( app );
@@ -69,7 +77,8 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 
 	/**
 	 * Get network connect status.
-	 * @return  {@code true} if connection is o.k.
+	 *
+	 * @return {@code true} if connection is o.k.
 	 */
 	protected boolean isConnected() {
 		return mConnected;
@@ -77,7 +86,9 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 
 	/**
 	 * Set network status.
-	 * @param connected  {@code true} if connection is o.k.
+	 *
+	 * @param connected
+	 * 		{@code true} if connection is o.k.
 	 */
 	public void setConnected( boolean connected ) {
 		mConnected = connected;
@@ -170,7 +181,7 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 	//[ChildEventListener]
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
-		RestObject serverData = (RestObject) dataSnapshot.getValue( mRestClazz );
+		RestObject serverData = dataSnapshot.getValue( mRestClazz );
 		long count = mRealm.where( RestPendingObject.class )
 						   .equalTo(
 								   "reqId",
