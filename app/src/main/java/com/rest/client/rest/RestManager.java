@@ -24,57 +24,97 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	public  Firebase DB;
+	private Firebase mDatabase;
 	/**
-	 * DB for storing pending queue.
+	 * Local storage for storing pending queue.
 	 */
 	private Realm    mRealm;
-	static  boolean  DB_CONNECTED;
+	private boolean  mConnected;
 
-	private  Class<?> mRestClazz;
+	private Class<?> mRestClazz;
 
-	public void init( Application app,   Class<?> clazz) {
+	/**
+	 * Initialize the manager.
+	 * @param app {@link Application} The application domain to control manager.
+	 * @param clazz The meta class of rest object.
+	 */
+	public void init( Application app, Class<?> clazz ) {
 		mRestClazz = clazz;
 		mRealm = Realm.getInstance( app );
-		DB_CONNECTED = isNetworkAvailable( app );
+		mConnected = isNetworkAvailable( app );
 		Firebase.setAndroidContext( app );
-		DB = new Firebase( URL );
-		DB.keepSynced( true );
-		DB.authWithCustomToken(
+		mDatabase = new Firebase( URL );
+		mDatabase.keepSynced( true );
+		mDatabase.authWithCustomToken(
 				AUTH,
 				this
 		);
-		DB.addChildEventListener( this );
-
-		/**
-		 The Firebase suggestion of handling connection and disconnection is nice.
-		 However in order to give client better feeling of disconnection, the rest package
-		 Use {@link RestNetworkChangeReceiver} to covert "disconnect" because it is little sensitive.
-		 The "connection" works well.
-		 */
 		Firebase connectedRef = new Firebase( URL + "/.info/connected" );
-		connectedRef.addValueEventListener( new ValueEventListener() {
-			@Override
-			public void onDataChange( DataSnapshot snapshot ) {
-				boolean connected = snapshot.getValue( Boolean.class );
-				if( connected ) {
-					boolean hasPending = mRealm.where( RestPendingObject.class )
-											   .count() > 0;
-					if( hasPending ) {
-						mRealm.beginTransaction();
-						mRealm.clear( RestPendingObject.class );
-						mRealm.commitTransaction();
-					}
-					EventBus.getDefault()
-							.post( new RestConnectedEvent() );
-				}
-			}
+		connectedRef.addValueEventListener( mDBConnectStatusHandler );
+	}
 
-			@Override
-			public void onCancelled( FirebaseError error ) {
-				System.err.println( "Listener was cancelled" );
+	/**
+	 * Setup the manager on UI.
+	 */
+	public void install() {
+		mDatabase.addChildEventListener( this );
+	}
+
+	/**
+	 * Remove the manager from UI.
+	 */
+	public void uninstall() {
+		mDatabase.removeEventListener( this );
+	}
+
+	/**
+	 * Get network connect status.
+	 * @return  {@code true} if connection is o.k.
+	 */
+	protected boolean isConnected() {
+		return mConnected;
+	}
+
+	/**
+	 * Set network status.
+	 * @param connected  {@code true} if connection is o.k.
+	 */
+	public void setConnected( boolean connected ) {
+		mConnected = connected;
+	}
+
+	/**
+	 * The Firebase suggestion of handling connection and disconnection is nice. However in order to give client better feeling of disconnection, the
+	 * rest package Use {@link RestNetworkChangeReceiver} to covert "disconnect" because it is little sensitive. The "connection" works well.
+	 */
+	private ValueEventListener mDBConnectStatusHandler = new ValueEventListener() {
+		@Override
+		public void onDataChange( DataSnapshot snapshot ) {
+			boolean connected = snapshot.getValue( Boolean.class );
+			if( connected ) {
+				clearPending();
+				EventBus.getDefault()
+						.post( new RestConnectedEvent() );
 			}
-		} );
+		}
+
+		@Override
+		public void onCancelled( FirebaseError error ) {
+			System.err.println( "Listener was cancelled" );
+		}
+	};
+
+	/**
+	 * Remove all posted pending objects.
+	 */
+	private void clearPending() {
+		boolean hasPending = mRealm.where( RestPendingObject.class )
+								   .count() > 0;
+		if( hasPending ) {
+			mRealm.beginTransaction();
+			mRealm.clear( RestPendingObject.class );
+			mRealm.commitTransaction();
+		}
 	}
 
 	//[AuthResultHandler]
@@ -106,22 +146,24 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 
 
 	/**
-	 * Save data on DB.
+	 * Save data on Firebase.
 	 *
 	 * @param t
-	 * 		{@link RestObject} to save on DB.
+	 * 		{@link RestObject} to save on Firebase.
 	 */
 	public void save( RestObject t ) {
 		//TO PENDING QUEUE.
-		mRealm.beginTransaction();
-		RestPendingObject restPendingObject = new RestPendingObject();
-		restPendingObject.setReqId( t.getReqId() );
-		mRealm.copyToRealm( restPendingObject );
-		mRealm.commitTransaction();
+		if( !isConnected() ) {
+			mRealm.beginTransaction();
+			RestPendingObject restPendingObject = new RestPendingObject();
+			restPendingObject.setReqId( t.getReqId() );
+			mRealm.copyToRealm( restPendingObject );
+			mRealm.commitTransaction();
+		}
 		//SAVE ON SERVER.
-		DB.child( t.getReqId() )
-		  .setValue( t );
-		DB.push();
+		mDatabase.child( t.getReqId() )
+				 .setValue( t );
+		mDatabase.push();
 	}
 
 
@@ -135,8 +177,8 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 								   serverData.getReqId()
 						   )
 						   .count();
-		int status = DB_CONNECTED || count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
-		RestObjectProxy proxy = serverData.createProxy( serverData );
+		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
+		RestObjectProxy proxy  = serverData.createProxy( serverData );
 		proxy.setStatus( status );
 		EventBus.getDefault()
 				.post( new RestObjectAddedEvent( proxy ) );
@@ -161,5 +203,6 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 	public void onCancelled( FirebaseError firebaseError ) {
 
 	}
+
 
 }

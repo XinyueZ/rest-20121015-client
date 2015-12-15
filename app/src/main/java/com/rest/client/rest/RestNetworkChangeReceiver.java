@@ -4,12 +4,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.rest.client.app.App;
+
 public class RestNetworkChangeReceiver extends BroadcastReceiver {
 	public RestNetworkChangeReceiver() {
 	}
 
 	@Override
 	public void onReceive( Context context, Intent intent ) {
-		RestManager.DB_CONNECTED = RestManager.isNetworkAvailable( context );
+		App.Instance.getClientRestManager()
+					.setConnected( RestManager.isNetworkAvailable( context ) );
 	}
 }

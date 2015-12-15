@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.rest.client.R;
+import com.rest.client.app.App;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.databinding.MainBinding;
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 			i++;
 		}
+		Snackbar.make( mBinding.rootView, "Network connected.", Snackbar.LENGTH_SHORT ).show();
 	}
 
 	/**
@@ -177,12 +180,14 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		App.Instance.getClientRestManager().install();
 		EventBus.getDefault()
 				.register( this );
 	}
 
 	@Override
 	protected void onPause() {
+		App.Instance.getClientRestManager().uninstall();
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();

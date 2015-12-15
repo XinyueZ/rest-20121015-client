@@ -13,6 +13,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.widget.EditText;
 
 import com.rest.client.R;
@@ -53,20 +54,22 @@ public final class EditCommitDialogFragment extends DialogFragment {
 															   android.R.string.ok,
 															   new DialogInterface.OnClickListener() {
 																   public void onClick( DialogInterface dialog, int whichButton ) {
+																	   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
+																		   String uuid = UUID.randomUUID()
+																							 .toString();
+																		   long time = System.currentTimeMillis();
+																		   String comment = Build.MODEL + "---" + mCommentEt.getText()
+																															.toString();
+																		   Client client = new Client(
+																				   uuid,
+																				   time,
+																				   comment
+																		   );
 
-																	   String uuid = UUID.randomUUID()
-																						 .toString();
-																	   long time = System.currentTimeMillis();
-																	   String comment = Build.MODEL + "---" + mCommentEt.getText()
-																														.toString();
-																	   Client client = new Client(
-																			   uuid,
-																			   time,
-																			   comment
-																	   );
-
-																	   App.Instance.getClientRestManager().save( client );
-																	   dismiss();
+																		   App.Instance.getClientRestManager()
+																					   .save( client );
+																		   dismiss();
+																	   }
 																   }
 															   }
 													   )
