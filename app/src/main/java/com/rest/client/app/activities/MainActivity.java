@@ -20,7 +20,8 @@ import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientProxy;
-import com.rest.client.rest.events.RestConnectedEvent;
+import com.rest.client.rest.events.RestChangedAfterConnectEvent;
+import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
 
 import de.greenrobot.event.EventBus;
@@ -44,24 +45,30 @@ public class MainActivity extends AppCompatActivity {
 	//------------------------------------------------
 
 	/**
-	 * Handler for {@link RestConnectedEvent}.
+	 * Handler for {@link RestChangedAfterConnectEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link RestConnectedEvent}.
+	 * 		Event {@link RestChangedAfterConnectEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestConnectedEvent e ) {
-		int i = 0;
-		for( ClientProxy clientProxy : mBinding.getAdapter()
-											   .getData() ) {
-			if( clientProxy.getStatus() == ClientProxy.NOT_SYNCED ) {
-				clientProxy.setStatus( ClientProxy.SYNCED );
-				mBinding.getAdapter()
-						.notifyItemChanged( i );
-			}
-			i++;
-		}
-		Snackbar.make( mBinding.rootView, "Network connected.", Snackbar.LENGTH_SHORT ).show();
+	public void onEvent( RestChangedAfterConnectEvent e ) {
+		mBinding.getAdapter()
+				.notifyItemChanged( e.getIndex() );
+	}
+
+	/**
+	 * Handler for {@link RestConnectEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestConnectEvent}.
+	 */
+	@Subscribe
+	public void onEvent( RestConnectEvent e ) {
+		Snackbar.make(
+				mBinding.rootView,
+				"Network connected.",
+				Snackbar.LENGTH_SHORT
+		).show();
 	}
 
 	/**
@@ -180,14 +187,17 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		App.Instance.getClientRestManager().install();
+		App.Instance.getClientRestManager()
+					.install( mBinding.getAdapter()
+									  .getData() );
 		EventBus.getDefault()
 				.register( this );
 	}
 
 	@Override
 	protected void onPause() {
-		App.Instance.getClientRestManager().uninstall();
+		App.Instance.getClientRestManager()
+					.uninstall();
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();

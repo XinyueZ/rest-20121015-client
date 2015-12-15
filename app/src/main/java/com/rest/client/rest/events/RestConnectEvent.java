@@ -1,5 +1,5 @@
 package com.rest.client.rest.events;
 
 
-public final class RestConnectedEvent {
+public final class RestConnectEvent {
 }

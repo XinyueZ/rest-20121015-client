@@ -1,9 +1,12 @@
 package com.rest.client.rest;
 
+import java.util.List;
+
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.Nullable;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
@@ -12,9 +15,11 @@ import com.firebase.client.Firebase;
 import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.rest.client.ds.ClientProxy;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
-import com.rest.client.rest.events.RestConnectedEvent;
+import com.rest.client.rest.events.RestChangedAfterConnectEvent;
+import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
 
 import de.greenrobot.event.EventBus;
@@ -37,6 +42,12 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 	 * Meta class of {@link RestObject}.
 	 */
 	private Class<? extends RestObject> mRestClazz;
+	/**
+	 * Pool to hold data from Firebase.
+	 */
+	private
+	@Nullable
+	List<? extends RestObjectProxy> mProxyPool;
 
 	/**
 	 * Initialize the manager.
@@ -65,6 +76,18 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 	 * Setup the manager on UI.
 	 */
 	public void install() {
+		mDatabase.addChildEventListener( this );
+	}
+
+
+	/**
+	 * Setup the manager on UI.
+	 *
+	 * @param proxyPool
+	 * 		Pool to hold data from Firebase.
+	 */
+	public void install( List<? extends RestObjectProxy> proxyPool ) {
+		setProxyPool( proxyPool );
 		mDatabase.addChildEventListener( this );
 	}
 
@@ -104,8 +127,19 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 			boolean connected = snapshot.getValue( Boolean.class );
 			if( connected ) {
 				clearPending();
+				if(getProxyPool() != null) {
+					int i = 0;
+					for( RestObjectProxy proxy : getProxyPool() ) {
+						if( proxy.getStatus() == ClientProxy.NOT_SYNCED ) {
+							proxy.setStatus( ClientProxy.SYNCED );
+							EventBus.getDefault()
+									.post( new RestChangedAfterConnectEvent( i ) );
+						}
+						i++;
+					}
+				}
 				EventBus.getDefault()
-						.post( new RestConnectedEvent() );
+						.post( new RestConnectEvent() );
 			}
 		}
 
@@ -126,6 +160,21 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 			mRealm.clear( RestPendingObject.class );
 			mRealm.commitTransaction();
 		}
+	}
+
+	/**
+	 * Set pool to hold data from Firebase.
+	 */
+	protected void setProxyPool( @Nullable List<? extends RestObjectProxy> proxyPool ) {
+		mProxyPool = proxyPool;
+	}
+
+	/**
+	 * Get pool to hold data from Firebase.
+	 */
+	@Nullable
+	protected List<? extends RestObjectProxy> getProxyPool() {
+		return mProxyPool;
 	}
 
 	//[AuthResultHandler]
