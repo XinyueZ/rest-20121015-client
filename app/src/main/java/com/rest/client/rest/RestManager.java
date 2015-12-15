@@ -7,6 +7,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
@@ -72,12 +73,6 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 		connectedRef.addValueEventListener( mDBConnectStatusHandler );
 	}
 
-	/**
-	 * Setup the manager on UI.
-	 */
-	public void install() {
-		mDatabase.addChildEventListener( this );
-	}
 
 
 	/**
@@ -127,7 +122,7 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 			boolean connected = snapshot.getValue( Boolean.class );
 			if( connected ) {
 				clearPending();
-				if(getProxyPool() != null) {
+				if( getProxyPool() != null ) {
 					int i = 0;
 					for( RestObjectProxy proxy : getProxyPool() ) {
 						if( proxy.getStatus() == ClientProxy.NOT_SYNCED ) {
@@ -240,8 +235,22 @@ public class RestManager implements AuthResultHandler, ChildEventListener {
 		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
 		RestObjectProxy proxy  = serverData.createProxy( serverData );
 		proxy.setStatus( status );
-		EventBus.getDefault()
-				.post( new RestObjectAddedEvent( proxy ) );
+		boolean find = false;
+		if( getProxyPool() != null ) {
+			for( RestObjectProxy saved : getProxyPool() ) {
+				if( TextUtils.equals(
+						saved.getReqId(),
+						proxy.getReqId()
+				) ) {
+					find = true;
+					break;
+				}
+			}
+		}
+		if( !find ) {
+			EventBus.getDefault()
+					.post( new RestObjectAddedEvent( proxy ) );
+		}
 	}
 
 	@Override
