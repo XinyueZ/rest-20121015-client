@@ -4,19 +4,26 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.content.Context;
+import android.databinding.Bindable;
 import android.databinding.DataBindingUtil;
+import android.databinding.Observable;
+import android.databinding.PropertyChangeRegistry;
 import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import com.rest.client.BR;
 import com.rest.client.R;
 import com.rest.client.app.App;
-import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientProxy;
 
 
-public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
+public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> implements Observable {
+	private PropertyChangeRegistry mRegistry = new PropertyChangeRegistry();
+	private
+	@Bindable
+	long mCount;
 	/**
 	 * Main layout for this component.
 	 */
@@ -43,20 +50,10 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 	 */
 	public void setData( List<ClientProxy> data ) {
 		mVisibleData = data;
-	}
-
-	/**
-	 * Add data-source for list-view.
-	 *
-	 * @param data
-	 * 		Data-source.
-	 * @param index
-	 * 		Position of new data.
-	 */
-	public void insertData( ClientProxy data, int index ) {
-		mVisibleData.add(
-				index,
-				data
+		mCount = mVisibleData.size();
+		mRegistry.notifyChange(
+				this,
+				BR.count
 		);
 	}
 
@@ -69,6 +66,11 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 	 */
 	public void addData( ClientProxy data ) {
 		mVisibleData.add( data );
+		mCount = mVisibleData.size();
+		mRegistry.notifyChange(
+				this,
+				BR.count
+		);
 	}
 
 	@Override
@@ -107,6 +109,19 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 		holder.mBinding.executePendingBindings();
 	}
 
+	public long getCount() {
+		return mCount;
+	}
+
+	@Override
+	public void addOnPropertyChangedCallback( OnPropertyChangedCallback callback ) {
+		mRegistry.add( callback );
+	}
+
+	@Override
+	public void removeOnPropertyChangedCallback( OnPropertyChangedCallback callback ) {
+		mRegistry.remove( callback );
+	}
 
 	/**
 	 * ViewHolder for the list.
