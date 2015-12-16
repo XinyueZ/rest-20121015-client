@@ -50,17 +50,39 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	private
 	@Nullable
-	List<? extends RestObjectProxy> mProxyPool;
+	List<RestObjectProxy> mProxyPool;
+
+	/**
+	 * The id of manger.
+	 */
+	private int mId;
+
+	/**
+	 * The id of manger.
+	 */
+	public int getId() {
+		return mId;
+	}
+
+	/**
+	 * Set the id of manger.
+	 */
+	private void setId( int id ) {
+		mId = id;
+	}
 
 	/**
 	 * Initialize the manager.
 	 *
+	 * @param id
+	 * 		Manager id.
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
 	 * @param clazz
 	 * 		The meta class of rest object.
 	 */
-	public void init( Application app, Class<? extends RestObject> clazz ) {
+	public void init( int id, Application app, Class<? extends RestObject> clazz ) {
+		setId( id );
 		mRestClazz = clazz;
 		mSentReqIds = Realm.getInstance( app );
 		Firebase.setAndroidContext( app );
@@ -83,7 +105,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * @param proxyPool
 	 * 		Pool to hold data from Firebase.
 	 */
-	public void install( Application app, List<? extends RestObjectProxy> proxyPool ) {
+	public void install( Application app, List<RestObjectProxy> proxyPool ) {
 		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 		mDatabase.addChildEventListener( this );
@@ -131,13 +153,16 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 						if( proxy.getStatus() == ClientProxy.NOT_SYNCED ) {
 							proxy.setStatus( ClientProxy.SYNCED );
 							EventBus.getDefault()
-									.post( new RestChangedAfterConnectEvent( i ) );
+									.post( new RestChangedAfterConnectEvent(
+											getId(),
+											i
+									) );
 						}
 						i++;
 					}
 				}
 				EventBus.getDefault()
-						.post( new RestConnectEvent() );
+						.post( new RestConnectEvent( getId() ) );
 			}
 		}
 
@@ -163,7 +188,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	/**
 	 * Set pool to hold data from Firebase.
 	 */
-	protected void setProxyPool( @Nullable List<? extends RestObjectProxy> proxyPool ) {
+	public void setProxyPool( @Nullable List<RestObjectProxy> proxyPool ) {
 		mProxyPool = proxyPool;
 	}
 
@@ -171,7 +196,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * Get pool to hold data from Firebase.
 	 */
 	@Nullable
-	protected List<? extends RestObjectProxy> getProxyPool() {
+	public List<RestObjectProxy> getProxyPool() {
 		return mProxyPool;
 	}
 
@@ -179,13 +204,19 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	@Override
 	public void onAuthenticated( AuthData authData ) {
 		EventBus.getDefault()
-				.post( new AuthenticatedEvent( authData ) );
+				.post( new AuthenticatedEvent(
+						getId(),
+						authData
+				) );
 	}
 
 	@Override
 	public void onAuthenticationError( FirebaseError firebaseError ) {
 		EventBus.getDefault()
-				.post( new AuthenticationErrorEvent( firebaseError ) );
+				.post( new AuthenticationErrorEvent(
+						getId(),
+						firebaseError
+				) );
 	}
 
 
@@ -222,9 +253,9 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		RestObject serverData = dataSnapshot.getValue( mRestClazz );
 		long count = mSentReqIds.where( RestPendingObject.class )
 								.equalTo(
-											 "reqId",
-											 serverData.getReqId()
-									 )
+										"reqId",
+										serverData.getReqId()
+								)
 								.count();
 		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
 		RestObjectProxy proxy  = serverData.createProxy();
@@ -244,8 +275,11 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 			}
 		}
 		if( !find ) {
+			if( getProxyPool() != null ) {
+				getProxyPool().add( proxy );
+			}
 			EventBus.getDefault()
-					.post( new RestObjectAddedEvent( proxy ) );
+					.post( new RestObjectAddedEvent( getId() ) );
 		}
 	}
 

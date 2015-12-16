@@ -22,8 +22,6 @@ import com.rest.client.app.App;
 import com.rest.client.ds.Client;
 
 import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
 
 public final class EditCommitDialogFragment2 extends DialogFragment {
 	private EditText mCommentEt;
@@ -71,12 +69,13 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 																				   comment
 																		   );
 
-																		   Retrofit retrofit = new Retrofit.Builder().addConverterFactory( GsonConverterFactory.create() )
-																													 .baseUrl( "http://rest-20121015.appspot.com/" )
-																													 .build();
-																		   Api          api = retrofit.create( Api.class );
-																		   Call<Client> clientCall = api.getResponse( client );
-																		   App.Instance.getClientRestApiManager().exec( clientCall, client );
+																		   Api          api        = Api.Retrofit.create( Api.class );
+																		   Call<Client> clientCall = api.insertClient( client );
+																		   App.Instance.getClientRestApiManager()
+																					   .exec(
+																							   clientCall,
+																							   client
+																					   );
 
 
 																		   dismiss();

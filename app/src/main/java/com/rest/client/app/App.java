@@ -38,6 +38,7 @@ import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.Response;
 import com.rest.client.rest.RestApiManager;
 import com.rest.client.rest.RestFireManager;
 
@@ -57,19 +58,29 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private RestFireManager mClientRestFireManager = new RestFireManager();
-	private RestApiManager<Client>  mClientRestApiManager  = new RestApiManager<>();
+	private RestFireManager          mClientRestFireManager  = new RestFireManager();
+	private RestApiManager<Client>   mClientRestApiManager   = new RestApiManager<>();
+	private RestApiManager<Response> mResponseRestApiManager = new RestApiManager<>();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		startAppGuardService( this );
 		mClientRestFireManager.init(
+				0,
 				this,
 				Client.class
 		);
 
+
+		mResponseRestApiManager.init(
+				1,
+				this
+		);
+
+
 		mClientRestApiManager.init(
+				2,
 				this
 		);
 	}
@@ -80,6 +91,10 @@ public final class App extends MultiDexApplication {
 
 	public RestApiManager<Client> getClientRestApiManager() {
 		return mClientRestApiManager;
+	}
+
+	public RestApiManager<Response> getResponseRestApiManager() {
+		return mResponseRestApiManager;
 	}
 
 	public static void startAppGuardService( Context cxt ) {

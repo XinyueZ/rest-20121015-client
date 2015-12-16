@@ -23,7 +23,7 @@ import com.rest.client.ds.ClientProxy;
 import com.rest.client.rest.events.RestChangedAfterConnectEvent;
 import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
-import com.rest.client.rest.events.RestResponseArrivalEvent;
+import com.rest.client.rest.events.RestApiResponseArrivalEvent;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
@@ -69,8 +69,7 @@ public class MainActivity extends AppCompatActivity {
 				mBinding.rootView,
 				"Network connected.",
 				Snackbar.LENGTH_SHORT
-		)
-				.show();
+		).show();
 	}
 
 	/**
@@ -81,8 +80,6 @@ public class MainActivity extends AppCompatActivity {
 	 */
 	@Subscribe
 	public void onEvent( RestObjectAddedEvent e ) {
-		mBinding.getAdapter()
-				.addData( (ClientProxy) e.getRestObjectProxy() );
 		Collections.sort(
 				mBinding.getAdapter()
 						.getData(),
@@ -98,13 +95,13 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/**
-	 * Handler for {@link RestResponseArrivalEvent}.
+	 * Handler for {@link RestApiResponseArrivalEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link RestResponseArrivalEvent}.
+	 * 		Event {@link RestApiResponseArrivalEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestResponseArrivalEvent e ) {
+	public void onEvent( RestApiResponseArrivalEvent e ) {
 		mBinding.getAdapter()
 				.notifyItemChanged( (int) e.getIndex() );
 	}
@@ -152,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void initList() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mBinding.setAdapter( new ListAdapter() );
+		mBinding.setAdapter( new ListAdapter<ClientProxy>() );
 	}
 
 
@@ -196,8 +193,7 @@ public class MainActivity extends AppCompatActivity {
 		App.Instance.getClientRestFireManager()
 					.install(
 							App.Instance,
-							mBinding.getAdapter()
-									.getData()
+							mBinding.getAdapter().getData()
 					);
 		EventBus.getDefault()
 				.register( this );

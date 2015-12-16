@@ -1,7 +1,9 @@
 package com.rest.client.app.activities;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.UUID;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -16,18 +18,22 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.rest.client.R;
+import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
+import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientProxy;
-import com.rest.client.rest.events.RestChangedAfterConnectEvent;
-import com.rest.client.rest.events.RestConnectEvent;
+import com.rest.client.ds.Response;
+import com.rest.client.ds.ResponseProxy;
+import com.rest.client.rest.RestObjectProxy;
+import com.rest.client.rest.events.RestApiResponseArrivalEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
-import com.rest.client.rest.events.RestResponseArrivalEvent;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
+import retrofit.Call;
 
 
 public class MainActivity2 extends AppCompatActivity {
@@ -40,39 +46,13 @@ public class MainActivity2 extends AppCompatActivity {
 	 * Main layout for this component.
 	 */
 	private static final int LAYOUT = R.layout.activity_main;
-
-
+	/**
+	 * Message holder.
+	 */
+	private Snackbar mSnackbar;
 	//------------------------------------------------
 	//Subscribes, event-handlers
 	//------------------------------------------------
-
-	/**
-	 * Handler for {@link RestChangedAfterConnectEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestChangedAfterConnectEvent}.
-	 */
-	@Subscribe
-	public void onEvent( RestChangedAfterConnectEvent e ) {
-		mBinding.getAdapter()
-				.notifyItemChanged( (int) e.getIndex() );
-	}
-
-	/**
-	 * Handler for {@link RestConnectEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestConnectEvent}.
-	 */
-	@Subscribe
-	public void onEvent( RestConnectEvent e ) {
-		Snackbar.make(
-				mBinding.rootView,
-				"Network connected.",
-				Snackbar.LENGTH_SHORT
-		)
-				.show();
-	}
 
 	/**
 	 * Handler for {@link RestObjectAddedEvent}.
@@ -82,32 +62,69 @@ public class MainActivity2 extends AppCompatActivity {
 	 */
 	@Subscribe
 	public void onEvent( RestObjectAddedEvent e ) {
-		mBinding.getAdapter()
-				.addData( (ClientProxy) e.getRestObjectProxy() );
-		Collections.sort(
+		switch( e.getId() ) {
+			case 1:
+				mSnackbar = Snackbar.make(
+						mBinding.rootView,
+						"Getting client list...",
+						Snackbar.LENGTH_INDEFINITE
+				);
+				mSnackbar.show();
+				break;
+			case 2:
+				Collections.sort(
+						mBinding.getAdapter()
+								.getData(),
+						new Comparator<ClientProxy>() {
+							@Override
+							public int compare( ClientProxy lhs, ClientProxy rhs ) {
+								return (int) ( rhs.getReqTime() - lhs.getReqTime() );
+							}
+						}
+				);
 				mBinding.getAdapter()
-						.getData(),
-				new Comparator<ClientProxy>() {
-					@Override
-					public int compare( ClientProxy lhs, ClientProxy rhs ) {
-						return (int) ( rhs.getReqTime() - lhs.getReqTime() );
-					}
-				}
-		);
-		mBinding.getAdapter()
-				.notifyDataSetChanged();
+						.notifyDataSetChanged();
+				break;
+		}
 	}
 
+
 	/**
-	 * Handler for {@link RestResponseArrivalEvent}.
+	 * Handler for {@link RestApiResponseArrivalEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link RestResponseArrivalEvent}.
+	 * 		Event {@link RestApiResponseArrivalEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestResponseArrivalEvent e ) {
-		mBinding.getAdapter()
-				.notifyItemChanged( (int) e.getIndex() );
+	public void onEvent( RestApiResponseArrivalEvent e ) {
+		switch( e.getId() ) {
+			case 1:
+				if( mSnackbar != null ) {
+					mSnackbar.dismiss();
+				}
+				ResponseProxy restObjectProxy = (ResponseProxy) e.getRestObjectProxy();
+				for( Client client : restObjectProxy.getResult() ) {
+					ClientProxy proxy = new ClientProxy( client );
+					proxy.setStatus( RestObjectProxy.SYNCED );
+					mBinding.getAdapter()
+							.addData( proxy );
+				}
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
+
+				App.Instance.getClientRestApiManager()
+							.install(
+									App.Instance,
+									mBinding.getAdapter()
+											.getData()
+
+							);
+				break;
+			case 2:
+				mBinding.getAdapter()
+						.notifyItemChanged( (int) e.getIndex() );
+				break;
+		}
 	}
 	//------------------------------------------------
 
@@ -171,7 +188,7 @@ public class MainActivity2 extends AppCompatActivity {
 
 	private void initList() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mBinding.setAdapter( new ListAdapter() );
+		mBinding.setAdapter( new ListAdapter<ClientProxy>() );
 	}
 
 
@@ -181,27 +198,49 @@ public class MainActivity2 extends AppCompatActivity {
 		initComponents();
 		initList();
 		initFAB();
+
+		App.Instance.getResponseRestApiManager()
+					.install(
+							App.Instance,
+							new ArrayList<RestObjectProxy>()
+					);
 	}
+
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		App.Instance.getClientRestApiManager()
-					.install(
-							App.Instance,
-							mBinding.getAdapter()
-									.getData()
-					);
 		EventBus.getDefault()
 				.register( this );
+		Api api = Api.Retrofit.create( Api.class );
+		String uuid = UUID.randomUUID()
+						  .toString();
+		long   time    = System.currentTimeMillis();
+		String comment = "get response";
+		Client client = new Client(
+				uuid,
+				time,
+				comment
+		);
+		Call<Response> responseCall = api.getList( client );
+		App.Instance.getResponseRestApiManager()
+					.exec(
+							responseCall,
+							client
+					);
 	}
 
 	@Override
 	protected void onPause() {
-		App.Instance.getClientRestApiManager()
-					.uninstall();
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		App.Instance.getResponseRestApiManager()
+					.uninstall();
+		super.onDestroy();
 	}
 }

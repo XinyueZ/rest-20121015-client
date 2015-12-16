@@ -16,10 +16,10 @@ import android.view.ViewGroup;
 import com.rest.client.BR;
 import com.rest.client.R;
 import com.rest.client.app.App;
-import com.rest.client.ds.ClientProxy;
+import com.rest.client.rest.RestObjectProxy;
 
 
-public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> implements Observable {
+public final class ListAdapter<T extends RestObjectProxy> extends RecyclerView.Adapter<ListAdapter.ViewHolder> implements Observable {
 	private PropertyChangeRegistry mRegistry = new PropertyChangeRegistry();
 	private
 	@Bindable
@@ -31,14 +31,14 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 	/**
 	 * Data-source.
 	 */
-	private              List<ClientProxy> mVisibleData = new LinkedList<>();
+	private              List<T> mVisibleData = new LinkedList<>();
 
 	/**
 	 * Get current used data-source.
 	 *
 	 * @return The data-source.
 	 */
-	public List<ClientProxy> getData() {
+	public List<T> getData() {
 		return mVisibleData;
 	}
 
@@ -48,7 +48,7 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 	 * @param data
 	 * 		Data-source.
 	 */
-	public void setData( List<ClientProxy> data ) {
+	public void setData( List<T> data ) {
 		mVisibleData = data;
 		mCount = mVisibleData.size();
 		mRegistry.notifyChange(
@@ -64,7 +64,7 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 	 * @param data
 	 * 		Data-source.
 	 */
-	public void addData( ClientProxy data ) {
+	public void addData( T data ) {
 		mVisibleData.add( data );
 		mCount = mVisibleData.size();
 		mRegistry.notifyChange(
@@ -93,7 +93,7 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 
 	@Override
 	public void onBindViewHolder( final ViewHolder holder, final int position ) {
-		ClientProxy entry = mVisibleData.get( position );
+		T entry = mVisibleData.get( position );
 		holder.mBinding.setVariable(
 				com.rest.client.BR.client,
 				entry
@@ -134,6 +134,4 @@ public final class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHold
 			mBinding = binding;
 		}
 	}
-
-
 }

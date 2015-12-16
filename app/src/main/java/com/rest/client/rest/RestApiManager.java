@@ -7,8 +7,8 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rest.client.rest.events.RestApiResponseArrivalEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
-import com.rest.client.rest.events.RestResponseArrivalEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -34,20 +34,43 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	 */
 	private boolean mConnected;
 	/**
-	 * Pool to hold data from Firebase.
+	 * Pool to hold data from Retrofit.
 	 */
 	private
 	@Nullable
-	List<? extends RestObjectProxy> mProxyPool;
+	List<RestObjectProxy> mProxyPool;
+
+
+	/**
+	 * The id of manger.
+	 */
+	private int mId;
+
+	/**
+	 * The id of manger.
+	 */
+	public int getId() {
+		return mId;
+	}
+
+	/**
+	 * Set the id of manger.
+	 */
+	private void setId( int id ) {
+		mId = id;
+	}
 
 	/**
 	 * Initialize the manager.
 	 *
+	 * @param id
+	 * 		Manager id.
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
 	 */
 
-	public void init( Application app  ) {
+	public void init( int id, Application app ) {
+		setId( id );
 		mSentReqIds = Realm.getInstance( app );
 	}
 
@@ -58,9 +81,9 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
 	 * @param proxyPool
-	 * 		Pool to hold data from Firebase.
+	 * 		Pool to hold data from server.
 	 */
-	public void install( Application app, List<? extends RestObjectProxy> proxyPool ) {
+	public void install( Application app, List<RestObjectProxy> proxyPool ) {
 		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 	}
@@ -106,17 +129,17 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	}
 
 	/**
-	 * Set pool to hold data from Firebase.
+	 * Set pool to hold data from Retrofit.
 	 */
-	protected void setProxyPool( @Nullable List<? extends RestObjectProxy> proxyPool ) {
+	public void setProxyPool( @Nullable List<RestObjectProxy> proxyPool ) {
 		mProxyPool = proxyPool;
 	}
 
 	/**
-	 * Get pool to hold data from Firebase.
+	 * Get pool to hold data from Retrofit.
 	 */
 	@Nullable
-	protected List<? extends RestObjectProxy> getProxyPool() {
+	public List<RestObjectProxy> getProxyPool() {
 		return mProxyPool;
 	}
 
@@ -143,8 +166,11 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 		//REFRESH APP-CLIENT.
 		RestObjectProxy proxy = restObject.createProxy();
 		proxy.setStatus( RestObjectProxy.NOT_SYNCED );
+		if( getProxyPool() != null ) {
+			getProxyPool().add( proxy );
+		}
 		EventBus.getDefault()
-				.post( new RestObjectAddedEvent( proxy ) );
+				.post( new RestObjectAddedEvent( getId() ) );
 	}
 
 	@Override
@@ -152,9 +178,9 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 		RestObject serverData = response.body();
 		RealmResults<RestPendingObject> pendingObjects = mSentReqIds.where( RestPendingObject.class )
 																	.equalTo(
-																	   "reqId",
-																	   serverData.getReqId()
-															   )
+																			"reqId",
+																			serverData.getReqId()
+																	)
 																	.findAll();
 		if( pendingObjects.size() > 0 ) {
 			mSentReqIds.beginTransaction();
@@ -162,6 +188,8 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 						  .removeFromRealm();
 			mSentReqIds.commitTransaction();
 		}
+
+
 		if( getProxyPool() != null ) {
 			int i = 0;
 			for( RestObjectProxy polled : getProxyPool() ) {
@@ -170,13 +198,20 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 						serverData.getReqId()
 				) ) {
 					polled.setStatus( RestObjectProxy.SYNCED );
+					RestObjectProxy proxy = serverData.createProxy();
+					proxy.setStatus( RestObjectProxy.SYNCED  );
 					EventBus.getDefault()
-							.post( new RestResponseArrivalEvent(i) );
+							.post( new RestApiResponseArrivalEvent(
+									getId(),
+									i,
+									proxy
+							) );
 					break;
 				}
 				i++;
 			}
 		}
+
 	}
 
 	@Override

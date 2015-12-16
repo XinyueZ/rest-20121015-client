@@ -4,8 +4,12 @@ package com.rest.client.ds;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import com.rest.client.rest.RestObject;
+import com.rest.client.rest.RestObjectProxy;
 
-public final class Response {
+public final class Response implements RestObject {
+	@SerializedName("reqId")
+	private String mReqId;
 
 	@SerializedName("status")
 	private int mStatus;
@@ -14,17 +18,36 @@ public final class Response {
 	@SerializedName("result")
 	private List<Client> mResult;
 
+	public Response() {
+	}
 
-	public void setStatus( int mStatus ) {
-		this.mStatus = mStatus;
+	public Response( String reqId, int status, List<Client> result ) {
+		mReqId = reqId;
+		mStatus = status;
+		mResult = result;
 	}
-	public void setResult( List<Client> mResult ) {
-		this.mResult = mResult;
-	}
+
 	public int getStatus() {
 		return mStatus;
 	}
+
 	public List<Client> getResult() {
 		return mResult;
+	}
+
+	@Override
+	public String getReqId() {
+		return mReqId;
+	}
+
+
+	@Override
+	public long getReqTime() {
+		return 0;
+	}
+
+	@Override
+	public RestObjectProxy createProxy() {
+		return new ResponseProxy( this );
 	}
 }

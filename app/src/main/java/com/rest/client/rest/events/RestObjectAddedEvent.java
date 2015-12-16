@@ -1,18 +1,16 @@
 package com.rest.client.rest.events;
 
 
-import com.rest.client.rest.RestObjectProxy;
-
 public final class RestObjectAddedEvent {
-	private RestObjectProxy mRestObjectProxy;
+	private int mId;
 
+	public RestObjectAddedEvent( int id ) {
+		mId = id;
+	}
 
-	public RestObjectAddedEvent( RestObjectProxy restObjectProxy ) {
-		mRestObjectProxy = restObjectProxy;
+	public int getId() {
+		return mId;
 	}
 
 
-	public RestObjectProxy getRestObjectProxy() {
-		return mRestObjectProxy;
-	}
 }
