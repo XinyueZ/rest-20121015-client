@@ -31,6 +31,10 @@ public class RestObjectProxy implements RestObject {
 		return mRestObject.getReqId();
 	}
 
+	@Override
+	public long getReqTime() {
+		return mRestObject.getReqTime();
+	}
 
 	@Override
 	public RestObjectProxy createProxy( RestObject restObject ) {
