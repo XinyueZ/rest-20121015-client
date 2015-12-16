@@ -66,7 +66,7 @@ public final class EditCommitDialogFragment extends DialogFragment {
 																				   comment
 																		   );
 
-																		   App.Instance.getClientRestManager()
+																		   App.Instance.getClientRestFireManager()
 																					   .save( client );
 																		   dismiss();
 																	   }

@@ -38,7 +38,7 @@ import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.ds.Client;
-import com.rest.client.rest.RestManager;
+import com.rest.client.rest.RestFireManager;
 
 
 /**
@@ -56,18 +56,18 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private RestManager mClientRestManager = new RestManager();
+	private RestFireManager mClientRestFireManager = new RestFireManager();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		startAppGuardService( this );
-		mClientRestManager.init( this,
-								 Client.class);
+		mClientRestFireManager.init( this,
+									 Client.class);
 	}
 
-	public RestManager getClientRestManager() {
-		return mClientRestManager;
+	public RestFireManager getClientRestFireManager() {
+		return mClientRestFireManager;
 	}
 
 	public static void startAppGuardService( Context cxt ) {
@@ -84,29 +84,6 @@ public final class App extends MultiDexApplication {
 															  .build();
 		GcmNetworkManager.getInstance( cxt )
 						 .schedule( scheduleTask );
-
-
-		//		Calendar notifyTime = Calendar.getInstance();
-		//		notifyTime.add(
-		//				Calendar.MINUTE,
-		//				2
-		//		);
-		//		long   current = System.currentTimeMillis();
-		//		long   nextFireWindow = (notifyTime.getTimeInMillis() - current) / 1000;
-		//		long   flexSecs       = 30L; // the task can run as early as 10 minutes from the scheduled time
-		//		String tag            = System.currentTimeMillis() + "";
-		//		OneoffTask onceTask = new OneoffTask.Builder().setService( AppGuardService.class )
-		//													  .setExecutionWindow(
-		//															  nextFireWindow + flexSecs,
-		//															  nextFireWindow + flexSecs * 2
-		//													  )
-		//													  .setTag( tag )
-		//													  .setPersisted( true )
-		//													  .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
-		//													  .setRequiresCharging( false )
-		//													  .build();
-		//		GcmNetworkManager.getInstance( cxt )
-		//						 .schedule( onceTask );
 	}
 
 }

@@ -26,7 +26,7 @@ import com.rest.client.rest.events.RestObjectAddedEvent;
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
-public class RestManager implements AuthResultHandler, ChildEventListener {
+public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";

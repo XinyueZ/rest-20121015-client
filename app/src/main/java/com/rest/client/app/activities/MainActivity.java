@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		App.Instance.getClientRestManager()
+		App.Instance.getClientRestFireManager()
 					.install( mBinding.getAdapter()
 									  .getData() );
 		EventBus.getDefault()
@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onPause() {
-		App.Instance.getClientRestManager()
+		App.Instance.getClientRestFireManager()
 					.uninstall();
 		EventBus.getDefault()
 				.unregister( this );

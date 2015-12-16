@@ -49,7 +49,7 @@ public final class AppGuardService extends GcmTaskService {
 				time,
 				comment
 		);
-		App.Instance.getClientRestManager()
+		App.Instance.getClientRestFireManager()
 					.save( client );
 		return GcmNetworkManager.RESULT_SUCCESS;
 	}

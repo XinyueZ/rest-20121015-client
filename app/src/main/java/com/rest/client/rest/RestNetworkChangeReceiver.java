@@ -12,7 +12,7 @@ public class RestNetworkChangeReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive( Context context, Intent intent ) {
-		App.Instance.getClientRestManager()
-					.setConnected( RestManager.isNetworkAvailable( context ) );
+		App.Instance.getClientRestFireManager()
+					.setConnected( RestFireManager.isNetworkAvailable( context ) );
 	}
 }
