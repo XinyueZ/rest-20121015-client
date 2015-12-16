@@ -9,6 +9,9 @@ public final class ClientProxy extends RestObjectProxy {
 		super( restObject );
 	}
 
+	public long getReqTime() {
+		return ( (Client) getRestObject() ).getReqTime();
+	}
 
 	public String getComment() {
 		return ( (Client) getRestObject() ).getComment();

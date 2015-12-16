@@ -38,6 +38,7 @@ import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.ds.Client;
+import com.rest.client.rest.RestApiManager;
 import com.rest.client.rest.RestFireManager;
 
 
@@ -57,17 +58,28 @@ public final class App extends MultiDexApplication {
 	}
 
 	private RestFireManager mClientRestFireManager = new RestFireManager();
+	private RestApiManager<Client>  mClientRestApiManager  = new RestApiManager<>();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		startAppGuardService( this );
-		mClientRestFireManager.init( this,
-									 Client.class);
+		mClientRestFireManager.init(
+				this,
+				Client.class
+		);
+
+		mClientRestApiManager.init(
+				this
+		);
 	}
 
 	public RestFireManager getClientRestFireManager() {
 		return mClientRestFireManager;
+	}
+
+	public RestApiManager<Client> getClientRestApiManager() {
+		return mClientRestApiManager;
 	}
 
 	public static void startAppGuardService( Context cxt ) {

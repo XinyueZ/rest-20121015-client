@@ -1,10 +1,9 @@
 package com.rest.client.rest.events;
 
-
-public final class RestChangedAfterConnectEvent {
+public final class RestResponseArrivalEvent {
 	private long mIndex;
 
-	public RestChangedAfterConnectEvent( long index ) {
+	public RestResponseArrivalEvent( long index ) {
 		mIndex = index;
 	}
 

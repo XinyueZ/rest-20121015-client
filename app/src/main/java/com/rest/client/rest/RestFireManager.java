@@ -3,9 +3,6 @@ package com.rest.client.rest;
 import java.util.List;
 
 import android.app.Application;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
@@ -26,6 +23,11 @@ import com.rest.client.rest.events.RestObjectAddedEvent;
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 
+/**
+ * Architecture for working with Firebase.
+ *
+ * @author Xinyue Zhao
+ */
 public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
@@ -34,7 +36,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
-	private Realm                       mRealm;
+	private Realm                       mSentReqIds;
 	/**
 	 * The network connect status.
 	 */
@@ -60,8 +62,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void init( Application app, Class<? extends RestObject> clazz ) {
 		mRestClazz = clazz;
-		mRealm = Realm.getInstance( app );
-		mConnected = isNetworkAvailable( app );
+		mSentReqIds = Realm.getInstance( app );
 		Firebase.setAndroidContext( app );
 		mDatabase = new Firebase( URL );
 		mDatabase.keepSynced( true );
@@ -74,14 +75,16 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	}
 
 
-
 	/**
 	 * Setup the manager on UI.
 	 *
+	 * @param app
+	 * 		{@link Application} The application domain to control manager.
 	 * @param proxyPool
 	 * 		Pool to hold data from Firebase.
 	 */
-	public void install( List<? extends RestObjectProxy> proxyPool ) {
+	public void install( Application app, List<? extends RestObjectProxy> proxyPool ) {
+		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 		mDatabase.addChildEventListener( this );
 	}
@@ -145,15 +148,15 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	};
 
 	/**
-	 * Remove all posted pending objects.
+	 * Remove all posted pending requests of offline.
 	 */
 	private void clearPending() {
-		boolean hasPending = mRealm.where( RestPendingObject.class )
-								   .count() > 0;
+		boolean hasPending = mSentReqIds.where( RestPendingObject.class )
+										.count() > 0;
 		if( hasPending ) {
-			mRealm.beginTransaction();
-			mRealm.clear( RestPendingObject.class );
-			mRealm.commitTransaction();
+			mSentReqIds.beginTransaction();
+			mSentReqIds.clear( RestPendingObject.class );
+			mSentReqIds.commitTransaction();
 		}
 	}
 
@@ -185,20 +188,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 				.post( new AuthenticationErrorEvent( firebaseError ) );
 	}
 
-	/**
-	 * Helper for checking current network status.
-	 *
-	 * @param cxt
-	 * 		{@link Context}.
-	 *
-	 * @return {@code true} if network is o.k.
-	 */
-	static boolean isNetworkAvailable( Context cxt ) {
-		ConnectivityManager connectivityManager = (ConnectivityManager) cxt.getSystemService( Context.CONNECTIVITY_SERVICE );
-		NetworkInfo         activeNetworkInfo   = connectivityManager.getActiveNetworkInfo();
-		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-	}
-
 
 	/**
 	 * Save data on Firebase.
@@ -207,13 +196,18 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		{@link RestObject} to save on Firebase.
 	 */
 	public void save( RestObject t ) {
-		//TO PENDING QUEUE.
+		//TO PENDING QUEUE FOR OFFLINE.
+		//BECAUSE SOMETIMES THE SAVE IS
+		//DONE UNDER OFFLINE AND FIREBAES
+		//HANDLES IT LOCAL. IN ORDER TO MARK
+		//OFFLINE STATUS ON APP-CLIENT THE
+		//QUEUE IS USED.
 		if( !isConnected() ) {
-			mRealm.beginTransaction();
+			mSentReqIds.beginTransaction();
 			RestPendingObject restPendingObject = new RestPendingObject();
 			restPendingObject.setReqId( t.getReqId() );
-			mRealm.copyToRealm( restPendingObject );
-			mRealm.commitTransaction();
+			mSentReqIds.copyToRealm( restPendingObject );
+			mSentReqIds.commitTransaction();
 		}
 		//SAVE ON SERVER.
 		mDatabase.child( t.getReqId() )
@@ -226,20 +220,22 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
 		RestObject serverData = dataSnapshot.getValue( mRestClazz );
-		long count = mRealm.where( RestPendingObject.class )
-						   .equalTo(
-								   "reqId",
-								   serverData.getReqId()
-						   )
-						   .count();
+		long count = mSentReqIds.where( RestPendingObject.class )
+								.equalTo(
+											 "reqId",
+											 serverData.getReqId()
+									 )
+								.count();
 		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
-		RestObjectProxy proxy  = serverData.createProxy( serverData );
+		RestObjectProxy proxy  = serverData.createProxy();
 		proxy.setStatus( status );
 		boolean find = false;
+
+		//TO ENSURE NO-DUPLICATED REQUESTS.
 		if( getProxyPool() != null ) {
-			for( RestObjectProxy saved : getProxyPool() ) {
+			for( RestObjectProxy polled : getProxyPool() ) {
 				if( TextUtils.equals(
-						saved.getReqId(),
+						polled.getReqId(),
 						proxy.getReqId()
 				) ) {
 					find = true;

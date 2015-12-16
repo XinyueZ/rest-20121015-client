@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".app.activities.MainActivity">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_api_example"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="API version demo"
         app:showAsAction="never" />
 </menu>

@@ -41,7 +41,7 @@ public class Client implements RestObject {
 
 
 	@Override
-	public RestObjectProxy createProxy( RestObject restObject ) {
-		return new ClientProxy( restObject );
+	public RestObjectProxy createProxy() {
+		return new ClientProxy( this );
 	}
 }

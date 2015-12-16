@@ -17,16 +17,21 @@ import android.text.TextUtils;
 import android.widget.EditText;
 
 import com.rest.client.R;
+import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
 
-public final class EditCommitDialogFragment extends DialogFragment {
+import retrofit.Call;
+import retrofit.GsonConverterFactory;
+import retrofit.Retrofit;
+
+public final class EditCommitDialogFragment2 extends DialogFragment {
 	private EditText mCommentEt;
 
 	public static DialogFragment newInstance( Context context ) {
-		return (DialogFragment) EditCommitDialogFragment.instantiate(
+		return (DialogFragment) EditCommitDialogFragment2.instantiate(
 				context,
-				EditCommitDialogFragment.class.getName()
+				EditCommitDialogFragment2.class.getName()
 		);
 	}
 
@@ -66,8 +71,13 @@ public final class EditCommitDialogFragment extends DialogFragment {
 																				   comment
 																		   );
 
-																		   App.Instance.getClientRestFireManager()
-																					   .save( client );
+																		   Retrofit retrofit = new Retrofit.Builder().addConverterFactory( GsonConverterFactory.create() )
+																													 .baseUrl( "http://rest-20121015.appspot.com/" )
+																													 .build();
+																		   Api          api = retrofit.create( Api.class );
+																		   Call<Client> clientCall = api.getResponse( client );
+																		   App.Instance.getClientRestApiManager().exec( clientCall, client );
+
 
 																		   dismiss();
 																	   }
