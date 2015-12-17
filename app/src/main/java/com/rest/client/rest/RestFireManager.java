@@ -21,6 +21,7 @@ import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
 
 import de.greenrobot.event.EventBus;
+import de.greenrobot.event.Subscribe;
 import io.realm.Realm;
 
 /**
@@ -28,7 +29,7 @@ import io.realm.Realm;
  *
  * @author Xinyue Zhao
  */
-public class RestFireManager   implements AuthResultHandler, ChildEventListener {
+public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
@@ -52,6 +53,57 @@ public class RestFireManager   implements AuthResultHandler, ChildEventListener 
 	@Nullable
 	List<RestObjectProxy> mProxyPool;
 
+	//------------------------------------------------
+	//Subscribes, event-handlers
+	//------------------------------------------------
+
+	/**
+	 * Handler for {@link AuthenticatedEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link AuthenticatedEvent}.
+	 */
+	@Subscribe
+	public void onEvent( AuthenticatedEvent e ) {
+
+	}
+
+	/**
+	 * Handler for {@link AuthenticatedEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link AuthenticatedEvent}.
+	 */
+	@Subscribe
+	public void onEvent( AuthenticationErrorEvent e ) {
+
+	}
+
+	/**
+	 * Handler for {@link RestObjectAddedEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestObjectAddedEvent}.
+	 */
+	@Subscribe
+	public void onEvent( RestObjectAddedEvent e ) {
+
+	}
+
+
+	/**
+	 * Handler for {@link RestConnectEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestConnectEvent}.
+	 */
+	@Subscribe
+	public void onEvent( RestConnectEvent e ) {
+
+	}
+
+	//------------------------------------------------
+
 	/**
 	 * The id of manger.
 	 */
@@ -73,7 +125,9 @@ public class RestFireManager   implements AuthResultHandler, ChildEventListener 
 
 	/**
 	 * Constructor of {@link RestFireManager}.
-	 * @param restClazz The class meta of from server returned data.
+	 *
+	 * @param restClazz
+	 * 		The class meta of from server returned data.
 	 */
 	public RestFireManager( Class<? extends RestObject> restClazz ) {
 		mRestClazz = restClazz;
@@ -87,7 +141,7 @@ public class RestFireManager   implements AuthResultHandler, ChildEventListener 
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
 	 */
-	public void init( int id, Application app  ) {
+	public void init( int id, Application app ) {
 		setId( id );
 		mSentReqIds = Realm.getInstance( app );
 		Firebase.setAndroidContext( app );
@@ -111,6 +165,8 @@ public class RestFireManager   implements AuthResultHandler, ChildEventListener 
 	 * 		Pool to hold data from Firebase.
 	 */
 	public void install( Application app, List<RestObjectProxy> proxyPool ) {
+		EventBus.getDefault()
+				.register( this );
 		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 		mDatabase.addChildEventListener( this );
@@ -120,6 +176,8 @@ public class RestFireManager   implements AuthResultHandler, ChildEventListener 
 	 * Remove the manager from UI.
 	 */
 	public void uninstall() {
+		EventBus.getDefault()
+				.unregister( this );
 		mDatabase.removeEventListener( this );
 	}
 
