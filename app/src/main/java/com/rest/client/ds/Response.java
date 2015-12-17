@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import com.rest.client.rest.RestObject;
 import com.rest.client.rest.RestObjectProxy;
 
-public final class Response implements RestObject {
+public final class Response extends RestObject {
 	@SerializedName("reqId")
 	private String mReqId;
 

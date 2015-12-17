@@ -1,11 +1,13 @@
 package com.rest.client.rest;
 
 
-public interface RestObject {
+public abstract class RestObject {
 	//Request ID --> must be "reqId" for json/gson/jackson.
-	String getReqId();
+	public abstract String getReqId();
+
 	//Time to fire the request --> must be "reqTime" for json/gson/jackson.
-	long getReqTime();
+	public abstract long getReqTime();
+
 	//Proxy builder.
-	RestObjectProxy createProxy( );
+	public abstract RestObjectProxy createProxy();
 }

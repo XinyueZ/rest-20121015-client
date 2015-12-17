@@ -28,7 +28,7 @@ import io.realm.Realm;
  *
  * @author Xinyue Zhao
  */
-public class RestFireManager implements AuthResultHandler, ChildEventListener {
+public class RestFireManager   implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
@@ -72,18 +72,23 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	}
 
 	/**
+	 * Constructor of {@link RestFireManager}.
+	 * @param restClazz The class meta of from server returned data.
+	 */
+	public RestFireManager( Class<? extends RestObject> restClazz ) {
+		mRestClazz = restClazz;
+	}
+
+	/**
 	 * Initialize the manager.
 	 *
 	 * @param id
 	 * 		Manager id.
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
-	 * @param clazz
-	 * 		The meta class of rest object.
 	 */
-	public void init( int id, Application app, Class<? extends RestObject> clazz ) {
+	public void init( int id, Application app  ) {
 		setId( id );
-		mRestClazz = clazz;
 		mSentReqIds = Realm.getInstance( app );
 		Firebase.setAndroidContext( app );
 		mDatabase = new Firebase( URL );
@@ -237,6 +242,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 			mSentReqIds.beginTransaction();
 			RestPendingObject restPendingObject = new RestPendingObject();
 			restPendingObject.setReqId( t.getReqId() );
+			restPendingObject.setReqTime( t.getReqTime() );
 			mSentReqIds.copyToRealm( restPendingObject );
 			mSentReqIds.commitTransaction();
 		}

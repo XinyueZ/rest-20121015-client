@@ -28,6 +28,7 @@ import com.rest.client.ds.ClientProxy;
 import com.rest.client.ds.Response;
 import com.rest.client.ds.ResponseProxy;
 import com.rest.client.rest.RestObjectProxy;
+import com.rest.client.rest.RestPendingObject;
 import com.rest.client.rest.events.RestApiResponseArrivalEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
 
@@ -223,10 +224,14 @@ public class MainActivity2 extends AppCompatActivity {
 				comment
 		);
 		Call<Response> responseCall = api.getList( client );
+		RestPendingObject pendingObject = new RestPendingObject();
+		pendingObject.setReqId( uuid );
+		pendingObject.setReqTime( time );
 		App.Instance.getResponseRestApiManager()
 					.exec(
 							responseCall,
-							client
+							client,
+							pendingObject
 					);
 	}
 

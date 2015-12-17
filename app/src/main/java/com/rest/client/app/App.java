@@ -58,9 +58,9 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private RestFireManager          mClientRestFireManager  = new RestFireManager();
-	private RestApiManager<Client>   mClientRestApiManager   = new RestApiManager<>();
-	private RestApiManager<Response> mResponseRestApiManager = new RestApiManager<>();
+	private RestFireManager                  mClientRestFireManager  = new RestFireManager( Client.class );
+	private RestApiManager<Client, Client>   mClientRestApiManager   = new RestApiManager<>();
+	private RestApiManager<Client, Response> mResponseRestApiManager = new RestApiManager<>();
 
 	@Override
 	public void onCreate() {
@@ -68,8 +68,7 @@ public final class App extends MultiDexApplication {
 		startAppGuardService( this );
 		mClientRestFireManager.init(
 				0,
-				this,
-				Client.class
+				this
 		);
 
 
@@ -89,11 +88,11 @@ public final class App extends MultiDexApplication {
 		return mClientRestFireManager;
 	}
 
-	public RestApiManager<Client> getClientRestApiManager() {
+	public RestApiManager<Client, Client> getClientRestApiManager() {
 		return mClientRestApiManager;
 	}
 
-	public RestApiManager<Response> getResponseRestApiManager() {
+	public RestApiManager<Client, Response> getResponseRestApiManager() {
 		return mResponseRestApiManager;
 	}
 

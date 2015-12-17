@@ -1,7 +1,7 @@
 package com.rest.client.rest;
 
 
-public class RestObjectProxy implements RestObject {
+public class RestObjectProxy extends RestObject {
 	public static final int NOT_SYNCED = 0;
 	public static final int SYNCED     = 1;
 	private RestObject mRestObject;

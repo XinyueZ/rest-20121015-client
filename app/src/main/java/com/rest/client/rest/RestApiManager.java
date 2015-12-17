@@ -12,6 +12,7 @@ import com.rest.client.rest.events.RestObjectAddedEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
+import io.realm.RealmObject;
 import io.realm.RealmResults;
 import retrofit.Call;
 import retrofit.Callback;
@@ -22,9 +23,14 @@ import retrofit.Retrofit;
 /**
  * Architecture for working with Retrofit.
  *
+ * @param <LD>
+ * 		"Local data". Meta class of local data that will be posted on server.
+ * @param <SD>
+ * 		"Server data". Meta class of server data that will be returned from server.
+ *
  * @author Xinyue Zhao
  */
-public class RestApiManager<T extends RestObject> implements Callback<T> {
+public class RestApiManager<LD extends RestObject, SD extends RestObject> implements Callback<SD> {
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
@@ -34,7 +40,7 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	 */
 	private boolean mConnected;
 	/**
-	 * Pool to hold data from Retrofit.
+	 * Pool to hold data posted for Retrofit.
 	 */
 	private
 	@Nullable
@@ -129,14 +135,14 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	}
 
 	/**
-	 * Set pool to hold data from Retrofit.
+	 * Set pool to hold data posted for Retrofit.
 	 */
 	public void setProxyPool( @Nullable List<RestObjectProxy> proxyPool ) {
 		mProxyPool = proxyPool;
 	}
 
 	/**
-	 * Get pool to hold data from Retrofit.
+	 * Get pool to hold data posted for Retrofit.
 	 */
 	@Nullable
 	public List<RestObjectProxy> getProxyPool() {
@@ -150,14 +156,14 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	 * @param call
 	 * 		The {@link Call} to the request.
 	 * @param restObject
-	 * 		The object to post on sever.
+	 * 		The request data to post on server.
+	 * @param pending
+	 * 		The temp pending object to queue to represent a posted object.
 	 */
-	public void exec( Call<T> call, RestObject restObject ) {
+	public void exec( Call<SD> call, LD restObject, RealmObject pending ) {
 		//TO PENDING QUEUE.
 		mSentReqIds.beginTransaction();
-		RestPendingObject restPendingObject = new RestPendingObject();
-		restPendingObject.setReqId( restObject.getReqId() );
-		mSentReqIds.copyToRealm( restPendingObject );
+		mSentReqIds.copyToRealm( pending );
 		mSentReqIds.commitTransaction();
 
 		//CALL API.
@@ -174,7 +180,7 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 	}
 
 	@Override
-	public void onResponse( Response<T> response, Retrofit retrofit ) {
+	public void onResponse( Response<SD> response, Retrofit retrofit ) {
 		RestObject serverData = response.body();
 		RealmResults<RestPendingObject> pendingObjects = mSentReqIds.where( RestPendingObject.class )
 																	.equalTo(
@@ -197,9 +203,11 @@ public class RestApiManager<T extends RestObject> implements Callback<T> {
 						polled.getReqId(),
 						serverData.getReqId()
 				) ) {
+					//UPDATE LOCAL STATUS OF POSTED DATA.
 					polled.setStatus( RestObjectProxy.SYNCED );
+					//GIVE SERVER DATA TO APP-CLIENT.
 					RestObjectProxy proxy = serverData.createProxy();
-					proxy.setStatus( RestObjectProxy.SYNCED  );
+					proxy.setStatus( RestObjectProxy.SYNCED );
 					EventBus.getDefault()
 							.post( new RestApiResponseArrivalEvent(
 									getId(),

@@ -20,6 +20,7 @@ import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientPending;
 
 import retrofit.Call;
 
@@ -69,12 +70,17 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 																				   comment
 																		   );
 
+																		   ClientPending pendingObject = new ClientPending();
+																		   pendingObject.setReqId( uuid );
+																		   pendingObject.setReqTime( time );
+																		   pendingObject.setComment( comment );
 																		   Api          api        = Api.Retrofit.create( Api.class );
 																		   Call<Client> clientCall = api.insertClient( client );
 																		   App.Instance.getClientRestApiManager()
 																					   .exec(
 																							   clientCall,
-																							   client
+																							   client,
+																							   pendingObject
 																					   );
 
 
