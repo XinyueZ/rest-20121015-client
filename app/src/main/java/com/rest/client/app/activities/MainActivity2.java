@@ -103,7 +103,7 @@ public class MainActivity2 extends AppCompatActivity {
 				if( mSnackbar != null ) {
 					mSnackbar.dismiss();
 				}
-				ResponseProxy restObjectProxy = (ResponseProxy) e.getRestObjectProxy();
+				ResponseProxy restObjectProxy = (ResponseProxy) e.getArrivalRestObjectProxy();
 				for( Client client : restObjectProxy.getResult() ) {
 					ClientProxy proxy = new ClientProxy( client );
 					proxy.setStatus( RestObjectProxy.SYNCED );

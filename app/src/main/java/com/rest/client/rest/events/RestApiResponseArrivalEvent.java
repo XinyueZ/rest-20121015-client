@@ -5,10 +5,6 @@ import com.rest.client.rest.RestObjectProxy;
 public final class RestApiResponseArrivalEvent {
 	private int mId;
 
-	public int getId() {
-		return mId;
-	}
-
 	private long mIndex;
 
 	private RestObjectProxy mRestObjectProxy;
@@ -24,7 +20,12 @@ public final class RestApiResponseArrivalEvent {
 		return mIndex;
 	}
 
-	public RestObjectProxy getRestObjectProxy() {
+	public RestObjectProxy getArrivalRestObjectProxy() {
 		return mRestObjectProxy;
+	}
+
+
+	public int getId() {
+		return mId;
 	}
 }

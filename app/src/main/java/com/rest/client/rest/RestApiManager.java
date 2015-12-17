@@ -47,6 +47,28 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	List<RestObjectProxy> mProxyPool;
 
 
+	//------------------------------------------------
+	//Subscribes, event-handlers
+	//------------------------------------------------
+
+	/**
+	 * Handler for {@link RestApiResponseArrivalEvent}.
+	 * @param e Event {@link RestApiResponseArrivalEvent}.
+	 */
+	public void onEvent(RestApiResponseArrivalEvent e) {
+
+	}
+
+	/**
+	 * Handler for {@link RestObjectAddedEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestObjectAddedEvent}.
+	 */
+	public void onEvent( RestObjectAddedEvent e ) {
+
+	}
+	//------------------------------------------------
 	/**
 	 * The id of manger.
 	 */
@@ -149,7 +171,10 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 		return mProxyPool;
 	}
 
-
+	/**
+	 * Meta type of the temp pending object to queue to represent a posted object.
+	 */
+	private Class<? extends RealmObject> mPendingClazz;
 	/**
 	 * Run a rest request.
 	 *
@@ -161,6 +186,8 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	 * 		The temp pending object to queue to represent a posted object.
 	 */
 	public void exec( Call<SD> call, LD restObject, RealmObject pending ) {
+		mPendingClazz = pending.getClass();
+
 		//TO PENDING QUEUE.
 		mSentReqIds.beginTransaction();
 		mSentReqIds.copyToRealm( pending );
@@ -182,7 +209,7 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	@Override
 	public void onResponse( Response<SD> response, Retrofit retrofit ) {
 		RestObject serverData = response.body();
-		RealmResults<RestPendingObject> pendingObjects = mSentReqIds.where( RestPendingObject.class )
+		RealmResults<? extends RealmObject> pendingObjects = mSentReqIds.where( mPendingClazz )
 																	.equalTo(
 																			"reqId",
 																			serverData.getReqId()
