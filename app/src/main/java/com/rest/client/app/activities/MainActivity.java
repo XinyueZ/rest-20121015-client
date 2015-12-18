@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 	 * 		Event {@link RestChangedAfterConnectEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestChangedAfterConnectEvent e ) {
+	public void onEventMainThread( RestChangedAfterConnectEvent e ) {
 		mBinding.getAdapter()
 				.notifyItemChanged( (int) e.getIndex() );
 	}
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 	 * 		Event {@link RestConnectEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestConnectEvent e ) {
+	public void onEventMainThread( RestConnectEvent e ) {
 		Snackbar.make(
 				mBinding.rootView,
 				"Network connected.",
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 	 * 		Event {@link RestObjectAddedEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestObjectAddedEvent e ) {
+	public void onEventMainThread( RestObjectAddedEvent e ) {
 		Collections.sort(
 				mBinding.getAdapter()
 						.getData(),
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
 	 * 		Event {@link RestApiResponseArrivalEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestApiResponseArrivalEvent e ) {
+	public void onEventMainThread( RestApiResponseArrivalEvent e ) {
 		mBinding.getAdapter()
 				.notifyItemChanged( (int) e.getIndex() );
 	}

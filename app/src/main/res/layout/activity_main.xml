@@ -41,6 +41,7 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <ProgressBar
+                android:id="@+id/loading_pb"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="center"

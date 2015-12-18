@@ -1,5 +1,6 @@
 package com.rest.client.rest;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import android.app.Application;
@@ -7,10 +8,14 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.rest.client.rest.events.RestApiResponseArrivalEvent;
+import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
+import com.rest.client.rest.events.UpdateNetworkStatus;
 
 import de.greenrobot.event.EventBus;
+import de.greenrobot.event.Subscribe;
 import io.realm.Realm;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
@@ -34,7 +39,7 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
-	private Realm   mSentReqIds;
+	private Realm   mDB;
 	/**
 	 * The network connect status.
 	 */
@@ -46,6 +51,15 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	@Nullable
 	List<RestObjectProxy> mProxyPool;
 
+	private static final Gson GSON = new Gson();
+	/**
+	 * Meta type of the temp pending object to queue to represent a posted object.
+	 */
+	private Class<? extends RealmObject> mPendingClazz;
+	/**
+	 * {@code true} if history will be returned when network results in no-response.
+	 */
+	private boolean                      mUseHistory;
 
 	//------------------------------------------------
 	//Subscribes, event-handlers
@@ -53,9 +67,12 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 
 	/**
 	 * Handler for {@link RestApiResponseArrivalEvent}.
-	 * @param e Event {@link RestApiResponseArrivalEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestApiResponseArrivalEvent}.
 	 */
-	public void onEvent(RestApiResponseArrivalEvent e) {
+	@Subscribe
+	public void onEventMainThread( RestApiResponseArrivalEvent e ) {
 
 	}
 
@@ -65,8 +82,22 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	 * @param e
 	 * 		Event {@link RestObjectAddedEvent}.
 	 */
-	public void onEvent( RestObjectAddedEvent e ) {
+	@Subscribe
+	public void onEventMainThread( RestObjectAddedEvent e ) {
 
+	}
+
+	/**
+	 * Handler for {@link UpdateNetworkStatus}.
+	 *
+	 * @param e
+	 * 		Event {@link UpdateNetworkStatus}.
+	 */
+	@Subscribe
+	public void onEventMainThread( UpdateNetworkStatus e ) {
+		setConnected( e.isConnected() );
+		EventBus.getDefault()
+				.post( new RestConnectEvent( getId() ) );
 	}
 	//------------------------------------------------
 	/**
@@ -84,7 +115,7 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	/**
 	 * Set the id of manger.
 	 */
-	private void setId( int id ) {
+	public void setId( int id ) {
 		mId = id;
 	}
 
@@ -99,7 +130,7 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 
 	public void init( int id, Application app ) {
 		setId( id );
-		mSentReqIds = Realm.getInstance( app );
+		mDB = Realm.getInstance( app );
 	}
 
 
@@ -112,6 +143,11 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	 * 		Pool to hold data from server.
 	 */
 	public void install( Application app, List<RestObjectProxy> proxyPool ) {
+		if( !EventBus.getDefault()
+					 .isRegistered( this ) ) {
+			EventBus.getDefault()
+					.register( this );
+		}
 		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 	}
@@ -120,7 +156,25 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	 * Remove the manager from UI.
 	 */
 	public void uninstall() {
+		if( EventBus.getDefault()
+					.isRegistered( this ) ) {
+			EventBus.getDefault()
+					.unregister( this );
+		}
+	}
 
+	/**
+	 * @return {@code true} if history will be returned when network results in no-response.
+	 */
+	private boolean isUseHistory() {
+		return mUseHistory;
+	}
+
+	/**
+	 * Set {@code true} if history will be returned when network results in no-response.
+	 */
+	public void setUseHistory( boolean useHistory ) {
+		mUseHistory = useHistory;
 	}
 
 	/**
@@ -144,19 +198,6 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 
 
 	/**
-	 * Remove all posted pending objects.
-	 */
-	private void clearPending() {
-		boolean hasPending = mSentReqIds.where( RestPendingObject.class )
-										.count() > 0;
-		if( hasPending ) {
-			mSentReqIds.beginTransaction();
-			mSentReqIds.clear( RestPendingObject.class );
-			mSentReqIds.commitTransaction();
-		}
-	}
-
-	/**
 	 * Set pool to hold data posted for Retrofit.
 	 */
 	public void setProxyPool( @Nullable List<RestObjectProxy> proxyPool ) {
@@ -171,37 +212,65 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 		return mProxyPool;
 	}
 
-	/**
-	 * Meta type of the temp pending object to queue to represent a posted object.
-	 */
-	private Class<? extends RealmObject> mPendingClazz;
+
 	/**
 	 * Run a rest request.
 	 *
 	 * @param call
 	 * 		The {@link Call} to the request.
-	 * @param restObject
+	 * @param requestObject
 	 * 		The request data to post on server.
 	 * @param pending
 	 * 		The temp pending object to queue to represent a posted object.
 	 */
-	public void exec( Call<SD> call, LD restObject, RealmObject pending ) {
+	public void exec( Call<SD> call, LD requestObject, RealmObject pending ) {
 		mPendingClazz = pending.getClass();
-
 		//TO PENDING QUEUE.
-		mSentReqIds.beginTransaction();
-		mSentReqIds.copyToRealm( pending );
-		mSentReqIds.commitTransaction();
+		mDB.beginTransaction();
+		Method method;
+		try {
+			method = pending.getClass()
+							.getMethod(
+									"setStatus",
+									int.class
+							);
+			method.invoke(
+					pending,
+					RestObjectProxy.NOT_SYNCED
+			);
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		mDB.copyToRealm( pending );
+		mDB.commitTransaction();
 
 		//CALL API.
 		call.enqueue( this );
 
 		//REFRESH APP-CLIENT.
-		RestObjectProxy proxy = restObject.createProxy();
+		RestObjectProxy proxy = requestObject.createProxy();
 		proxy.setStatus( RestObjectProxy.NOT_SYNCED );
 		if( getProxyPool() != null ) {
 			getProxyPool().add( proxy );
 		}
+
+		EventBus.getDefault()
+				.post( new RestObjectAddedEvent( getId() ) );
+	}
+
+
+	/**
+	 * Run a rest request.
+	 *
+	 * @param call
+	 * 		The {@link Call} to the request.
+	 * @param pendingClazz
+	 * 		Meta type of the temp pending object to queue to represent a posted object.
+	 */
+	public void exec( Call<SD> call, Class<? extends RealmObject> pendingClazz ) {
+		mPendingClazz = pendingClazz;
+		//CALL API.
+		call.enqueue( this );
 		EventBus.getDefault()
 				.post( new RestObjectAddedEvent( getId() ) );
 	}
@@ -209,17 +278,37 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 	@Override
 	public void onResponse( Response<SD> response, Retrofit retrofit ) {
 		RestObject serverData = response.body();
-		RealmResults<? extends RealmObject> pendingObjects = mSentReqIds.where( mPendingClazz )
-																	.equalTo(
-																			"reqId",
-																			serverData.getReqId()
-																	)
-																	.findAll();
+
+		if( isUseHistory() ) {
+			//ADD TO HISTORY
+			mDB.beginTransaction();
+			String json = GSON.toJson( serverData );
+			Log.d(
+					getClass().getSimpleName(),
+					"onResponse: " + json
+			);
+
+			RestHistory history = new RestHistory();
+			history.setName( getClass().getSimpleName() + "_" + getId() );
+			history.setJson( json );
+			history.setType( serverData.getClass()
+									   .getName() );
+			mDB.copyToRealmOrUpdate( history );
+			mDB.commitTransaction();
+		}
+
+
+		RealmResults<? extends RealmObject> pendingObjects = mDB.where( mPendingClazz )
+																.equalTo(
+																		"reqId",
+																		serverData.getReqId()
+																)
+																.findAll();
 		if( pendingObjects.size() > 0 ) {
-			mSentReqIds.beginTransaction();
-			pendingObjects.get( 0 )
-						  .removeFromRealm();
-			mSentReqIds.commitTransaction();
+			RealmObject pendingObject = pendingObjects.get( 0 );
+			mDB.beginTransaction();
+			pendingObject.removeFromRealm();
+			mDB.commitTransaction();
 		}
 
 
@@ -239,7 +328,8 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 							.post( new RestApiResponseArrivalEvent(
 									getId(),
 									i,
-									proxy
+									proxy,
+									false
 							) );
 					break;
 				}
@@ -251,10 +341,58 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 
 	@Override
 	public void onFailure( Throwable t ) {
-		Log.e(
+		Log.d(
 				getClass().getSimpleName(),
 				"onFailure: " + t.toString()
 
 		);
+
+
+		RealmResults<RestHistory> historyList = mDB.where( RestHistory.class )
+												   .equalTo(
+														   "name",
+														   getClass().getSimpleName() + "_" + getId()
+												   )
+												   .findAll();
+
+		if( historyList.size() > 0 ) {
+			RestHistory history = historyList.get( 0 );
+			if( !TextUtils.isEmpty( history.getJson() ) ) {
+				try {
+					SD serverData = (SD) GSON.fromJson(
+							history.getJson(),
+							getClass().getClassLoader()
+									  .loadClass( history.getType() )
+					);
+					RestObjectProxy proxy = serverData.createProxy();
+					proxy.setStatus( RestObjectProxy.SYNCED );
+					EventBus.getDefault()
+							.post( new RestApiResponseArrivalEvent(
+									getId(),
+									0,
+									proxy,
+									true
+							) );
+				} catch( ClassNotFoundException e ) {
+					e.printStackTrace();
+				}
+			} else {
+				EventBus.getDefault()
+						.post( new RestApiResponseArrivalEvent(
+								getId(),
+								0,
+								null,
+								false
+						) );
+			}
+		} else {
+			EventBus.getDefault()
+					.post( new RestApiResponseArrivalEvent(
+							getId(),
+							0,
+							null,
+							false
+					) );
+		}
 	}
 }

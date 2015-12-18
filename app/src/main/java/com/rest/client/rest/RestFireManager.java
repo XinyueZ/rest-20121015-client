@@ -19,6 +19,7 @@ import com.rest.client.rest.events.AuthenticationErrorEvent;
 import com.rest.client.rest.events.RestChangedAfterConnectEvent;
 import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
+import com.rest.client.rest.events.UpdateNetworkStatus;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
@@ -37,7 +38,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
-	private Realm                       mSentReqIds;
+	private Realm                       mDB;
 	/**
 	 * The network connect status.
 	 */
@@ -64,7 +65,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		Event {@link AuthenticatedEvent}.
 	 */
 	@Subscribe
-	public void onEvent( AuthenticatedEvent e ) {
+	public void onEventMainThread( AuthenticatedEvent e ) {
 
 	}
 
@@ -75,7 +76,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		Event {@link AuthenticatedEvent}.
 	 */
 	@Subscribe
-	public void onEvent( AuthenticationErrorEvent e ) {
+	public void onEventMainThread( AuthenticationErrorEvent e ) {
 
 	}
 
@@ -86,7 +87,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		Event {@link RestObjectAddedEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestObjectAddedEvent e ) {
+	public void onEventMainThread( RestObjectAddedEvent e ) {
 
 	}
 
@@ -98,10 +99,20 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		Event {@link RestConnectEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestConnectEvent e ) {
-
+	public void onEventMainThread( RestConnectEvent e ) {
+		clearPending();
 	}
 
+	/**
+	 * Handler for {@link UpdateNetworkStatus}.
+	 *
+	 * @param e
+	 * 		Event {@link UpdateNetworkStatus}.
+	 */
+	@Subscribe
+	public void onEventMainThread( UpdateNetworkStatus e ) {
+		setConnected( e.isConnected() );
+	}
 	//------------------------------------------------
 
 	/**
@@ -119,7 +130,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	/**
 	 * Set the id of manger.
 	 */
-	private void setId( int id ) {
+	public void setId( int id ) {
 		mId = id;
 	}
 
@@ -143,7 +154,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void init( int id, Application app ) {
 		setId( id );
-		mSentReqIds = Realm.getInstance( app );
+		mDB = Realm.getInstance( app );
 		Firebase.setAndroidContext( app );
 		mDatabase = new Firebase( URL );
 		mDatabase.keepSynced( true );
@@ -151,8 +162,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 				AUTH,
 				this
 		);
-		Firebase connectedRef = new Firebase( URL + "/.info/connected" );
-		connectedRef.addValueEventListener( mDBConnectStatusHandler );
 	}
 
 
@@ -165,8 +174,14 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		Pool to hold data from Firebase.
 	 */
 	public void install( Application app, List<RestObjectProxy> proxyPool ) {
-		EventBus.getDefault()
-				.register( this );
+		if( !EventBus.getDefault()
+					 .isRegistered( this ) ) {
+			EventBus.getDefault()
+					.register( this );
+		}
+
+		Firebase connectedRef = new Firebase( URL + "/.info/connected" );
+		connectedRef.addValueEventListener( mDBConnectStatusHandler );
 		mConnected = RestUtils.isNetworkAvailable( app );
 		setProxyPool( proxyPool );
 		mDatabase.addChildEventListener( this );
@@ -176,8 +191,11 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * Remove the manager from UI.
 	 */
 	public void uninstall() {
-		EventBus.getDefault()
-				.unregister( this );
+		if( EventBus.getDefault()
+					.isRegistered( this ) ) {
+			EventBus.getDefault()
+					.unregister( this );
+		}
 		mDatabase.removeEventListener( this );
 	}
 
@@ -209,7 +227,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		public void onDataChange( DataSnapshot snapshot ) {
 			boolean connected = snapshot.getValue( Boolean.class );
 			if( connected ) {
-				clearPending();
 				if( getProxyPool() != null ) {
 					int i = 0;
 					for( RestObjectProxy proxy : getProxyPool() ) {
@@ -239,12 +256,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * Remove all posted pending requests of offline.
 	 */
 	private void clearPending() {
-		boolean hasPending = mSentReqIds.where( RestPendingObject.class )
-										.count() > 0;
+		boolean hasPending = mDB.where( RestPendingObject.class )
+								.count() > 0;
 		if( hasPending ) {
-			mSentReqIds.beginTransaction();
-			mSentReqIds.clear( RestPendingObject.class );
-			mSentReqIds.commitTransaction();
+			mDB.beginTransaction();
+			mDB.clear( RestPendingObject.class );
+			mDB.commitTransaction();
 		}
 	}
 
@@ -297,12 +314,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		//OFFLINE STATUS ON APP-CLIENT THE
 		//QUEUE IS USED.
 		if( !isConnected() ) {
-			mSentReqIds.beginTransaction();
+			mDB.beginTransaction();
 			RestPendingObject restPendingObject = new RestPendingObject();
 			restPendingObject.setReqId( t.getReqId() );
 			restPendingObject.setReqTime( t.getReqTime() );
-			mSentReqIds.copyToRealm( restPendingObject );
-			mSentReqIds.commitTransaction();
+			mDB.copyToRealm( restPendingObject );
+			mDB.commitTransaction();
 		}
 		//SAVE ON SERVER.
 		mDatabase.child( t.getReqId() )
@@ -315,12 +332,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
 		RestObject serverData = dataSnapshot.getValue( mRestClazz );
-		long count = mSentReqIds.where( RestPendingObject.class )
-								.equalTo(
+		long count = mDB.where( RestPendingObject.class )
+						.equalTo(
 										"reqId",
 										serverData.getReqId()
 								)
-								.count();
+						.count();
 		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
 		RestObjectProxy proxy  = serverData.createProxy();
 		proxy.setStatus( status );

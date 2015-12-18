@@ -73,6 +73,22 @@ public final class ListAdapter<T extends RestObjectProxy> extends RecyclerView.A
 		);
 	}
 
+
+	/**
+	 * Add data-source for list-view.
+	 *
+	 * @param data
+	 * 		Data-source.
+	 */
+	public void addData( List<T> data ) {
+		mVisibleData.addAll( data );
+		mCount = mVisibleData.size();
+		mRegistry.notifyChange(
+				this,
+				BR.count
+		);
+	}
+
 	@Override
 	public int getItemCount() {
 		return mVisibleData == null ? 0 : mVisibleData.size();

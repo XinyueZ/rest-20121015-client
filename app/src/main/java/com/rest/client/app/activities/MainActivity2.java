@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.rest.client.R;
 import com.rest.client.api.Api;
@@ -24,17 +25,19 @@ import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientPending;
 import com.rest.client.ds.ClientProxy;
-import com.rest.client.ds.Response;
 import com.rest.client.ds.ResponseProxy;
 import com.rest.client.rest.RestObjectProxy;
 import com.rest.client.rest.RestPendingObject;
 import com.rest.client.rest.events.RestApiResponseArrivalEvent;
+import com.rest.client.rest.events.RestConnectEvent;
 import com.rest.client.rest.events.RestObjectAddedEvent;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
-import retrofit.Call;
+import io.realm.Realm;
+import io.realm.RealmResults;
 
 
 public class MainActivity2 extends AppCompatActivity {
@@ -62,9 +65,12 @@ public class MainActivity2 extends AppCompatActivity {
 	 * 		Event {@link RestObjectAddedEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestObjectAddedEvent e ) {
+	public void onEventMainThread( RestObjectAddedEvent e ) {
 		switch( e.getId() ) {
 			case 1:
+				if( mSnackbar != null ) {
+					mSnackbar.dismiss();
+				}
 				mSnackbar = Snackbar.make(
 						mBinding.rootView,
 						"Getting client list...",
@@ -91,37 +97,132 @@ public class MainActivity2 extends AppCompatActivity {
 
 
 	/**
+	 * Handler for {@link RestConnectEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link RestConnectEvent}.
+	 */
+	@Subscribe
+	public void onEventMainThread( RestConnectEvent e ) {
+		switch( e.getId() ) {
+			case 2:
+				//Might be recovered to request.
+				RealmResults<ClientPending> p1 = Realm.getInstance( App.Instance )
+													  .where( ClientPending.class )
+													  .equalTo(
+															  "status",
+															  RestObjectProxy.NOT_SYNCED
+													  )
+													  .findAll();
+				for( ClientPending pending : p1 ) {
+					Client client = new Client(
+							pending.getReqId(),
+							pending.getReqTime(),
+							pending.getComment()
+					);
+					App.Instance.getClientRestApiManager()
+								.exec(
+										Api.Retrofit.create( Api.class )
+													.insertClient( client ),
+										ClientPending.class
+								);
+				}
+				break;
+		}
+	}
+
+	/**
 	 * Handler for {@link RestApiResponseArrivalEvent}.
 	 *
 	 * @param e
 	 * 		Event {@link RestApiResponseArrivalEvent}.
 	 */
 	@Subscribe
-	public void onEvent( RestApiResponseArrivalEvent e ) {
+	public void onEventMainThread( RestApiResponseArrivalEvent e ) {
+		if( mSnackbar != null ) {
+			mSnackbar.dismiss();
+		}
+		if( e.isFromHistory() ) {
+			mSnackbar = Snackbar.make(
+					mBinding.rootView,
+					"From history...",
+					Snackbar.LENGTH_INDEFINITE
+			);
+			mSnackbar.show();
+		}
 		switch( e.getId() ) {
 			case 1:
-				if( mSnackbar != null ) {
-					mSnackbar.dismiss();
-				}
-				ResponseProxy restObjectProxy = (ResponseProxy) e.getArrivalRestObjectProxy();
-				for( Client client : restObjectProxy.getResult() ) {
+				//The list will be built, the head of list should be items that might being pended.
+				RealmResults<ClientPending> pendingObjects = Realm.getInstance( App.Instance )
+																  .where( ClientPending.class )
+																  .equalTo(
+																		  "status",
+																		  RestObjectProxy.NOT_SYNCED
+																  )
+																  .findAll();
+				for( ClientPending pending : pendingObjects ) {
+					Client client = new Client(
+							pending.getReqId(),
+							pending.getReqTime(),
+							pending.getComment()
+					);
 					ClientProxy proxy = new ClientProxy( client );
-					proxy.setStatus( RestObjectProxy.SYNCED );
+					proxy.setStatus( RestObjectProxy.NOT_SYNCED );
 					mBinding.getAdapter()
 							.addData( proxy );
+					App.Instance.getClientRestApiManager()
+								.exec(
+										Api.Retrofit.create( Api.class )
+													.insertClient( client ),
+										ClientPending.class
+								);
 				}
-				mBinding.getAdapter()
-						.notifyDataSetChanged();
 
-				App.Instance.getClientRestApiManager()
-							.install(
-									App.Instance,
-									mBinding.getAdapter()
-											.getData()
+				if( e.getArrivalRestObjectProxy() != null ) {
+					ResponseProxy restObjectProxy = (ResponseProxy) e.getArrivalRestObjectProxy();
+					for( Client client : restObjectProxy.getResult() ) {
+						ClientProxy proxy = new ClientProxy( client );
+						proxy.setStatus( RestObjectProxy.SYNCED );
+						mBinding.getAdapter()
+								.addData( proxy );
+					}
+				} else {
+					mBinding.loadingPb.setVisibility( View.INVISIBLE );
+					mSnackbar = Snackbar.make(
+							mBinding.rootView,
+							"Can not load data...",
+							Snackbar.LENGTH_INDEFINITE
+					).setAction(
+							"Reload",
+							new OnClickListener() {
+								@Override
+								public void onClick( View v ) {
+									load();
+								}
+							}
+					);
+					mSnackbar.show();
+				}
 
-							);
+				//Should update UI-List.
+				if( mBinding.getAdapter()
+							.getItemCount() > 0 ) {
+					Collections.sort(
+							mBinding.getAdapter()
+									.getData(),
+							new Comparator<ClientProxy>() {
+								@Override
+								public int compare( ClientProxy lhs, ClientProxy rhs ) {
+									return (int) ( rhs.getReqTime() - lhs.getReqTime() );
+								}
+							}
+					);
+					mBinding.getAdapter()
+							.notifyDataSetChanged();
+				}
 				break;
 			case 2:
+				//Should update UI-List for updated list-item.
 				mBinding.getAdapter()
 						.notifyItemChanged( (int) e.getIndex() );
 				break;
@@ -193,6 +294,28 @@ public class MainActivity2 extends AppCompatActivity {
 	}
 
 
+	private void load() {
+		String uuid = UUID.randomUUID()
+						  .toString();
+		long   time    = System.currentTimeMillis();
+		String comment = "get response";
+		Client client = new Client(
+				uuid,
+				time,
+				comment
+		);
+		RestPendingObject pendingObject = new RestPendingObject();
+		pendingObject.setReqId( uuid );
+		pendingObject.setReqTime( time );
+		App.Instance.getResponseRestApiManager()
+					.exec(
+							Api.Retrofit.create( Api.class )
+										.getList( client ),
+							client,
+							pendingObject
+					);
+	}
+
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
@@ -205,34 +328,21 @@ public class MainActivity2 extends AppCompatActivity {
 							App.Instance,
 							new ArrayList<RestObjectProxy>()
 					);
-	}
+		App.Instance.getClientRestApiManager()
+					.install(
+							App.Instance,
+							mBinding.getAdapter()
+									.getData()
 
+					);
+	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		EventBus.getDefault()
 				.register( this );
-		Api api = Api.Retrofit.create( Api.class );
-		String uuid = UUID.randomUUID()
-						  .toString();
-		long   time    = System.currentTimeMillis();
-		String comment = "get response";
-		Client client = new Client(
-				uuid,
-				time,
-				comment
-		);
-		Call<Response> responseCall = api.getList( client );
-		RestPendingObject pendingObject = new RestPendingObject();
-		pendingObject.setReqId( uuid );
-		pendingObject.setReqTime( time );
-		App.Instance.getResponseRestApiManager()
-					.exec(
-							responseCall,
-							client,
-							pendingObject
-					);
+		load();
 	}
 
 	@Override
@@ -245,6 +355,8 @@ public class MainActivity2 extends AppCompatActivity {
 	@Override
 	protected void onDestroy() {
 		App.Instance.getResponseRestApiManager()
+					.uninstall();
+		App.Instance.getClientRestApiManager()
 					.uninstall();
 		super.onDestroy();
 	}

@@ -1,5 +1,7 @@
 package com.rest.client.rest.events;
 
+import android.support.annotation.Nullable;
+
 import com.rest.client.rest.RestObjectProxy;
 
 public final class RestApiResponseArrivalEvent {
@@ -7,12 +9,16 @@ public final class RestApiResponseArrivalEvent {
 
 	private long mIndex;
 
-	private RestObjectProxy mRestObjectProxy;
+	private @Nullable
+	RestObjectProxy mRestObjectProxy;
 
-	public RestApiResponseArrivalEvent( int id, long index, RestObjectProxy restObjectProxy ) {
+	private boolean mFromHistory;
+
+	public RestApiResponseArrivalEvent( int id, long index, @Nullable RestObjectProxy restObjectProxy, boolean fromHistory ) {
 		mId = id;
 		mIndex = index;
 		mRestObjectProxy = restObjectProxy;
+		mFromHistory = fromHistory;
 	}
 
 
@@ -20,6 +26,7 @@ public final class RestApiResponseArrivalEvent {
 		return mIndex;
 	}
 
+	@Nullable
 	public RestObjectProxy getArrivalRestObjectProxy() {
 		return mRestObjectProxy;
 	}
@@ -27,5 +34,10 @@ public final class RestApiResponseArrivalEvent {
 
 	public int getId() {
 		return mId;
+	}
+
+
+	public boolean isFromHistory() {
+		return mFromHistory;
 	}
 }

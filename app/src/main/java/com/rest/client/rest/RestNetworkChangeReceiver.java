@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.rest.client.app.App;
+import com.rest.client.rest.events.UpdateNetworkStatus;
+
+import de.greenrobot.event.EventBus;
 
 public class RestNetworkChangeReceiver extends BroadcastReceiver {
 	public RestNetworkChangeReceiver() {
@@ -12,7 +14,7 @@ public class RestNetworkChangeReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive( Context context, Intent intent ) {
-		App.Instance.getClientRestFireManager()
-					.setConnected( RestUtils.isNetworkAvailable( context ) );
+		EventBus.getDefault()
+				.post( new UpdateNetworkStatus( RestUtils.isNetworkAvailable( context ) ) );
 	}
 }
