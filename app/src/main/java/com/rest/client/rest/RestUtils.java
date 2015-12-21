@@ -6,6 +6,7 @@ import android.net.NetworkInfo;
 
 
 public final class RestUtils {
+
 	/**
 	 * Helper for checking current network status.
 	 *
@@ -19,4 +20,5 @@ public final class RestUtils {
 		NetworkInfo         activeNetworkInfo   = connectivityManager.getActiveNetworkInfo();
 		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 	}
+
 }

@@ -1,8 +1,5 @@
 package com.rest.client.app.activities;
 
-import java.util.Collections;
-import java.util.Comparator;
-
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -19,14 +16,14 @@ import com.rest.client.app.App;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.databinding.MainBinding;
-import com.rest.client.ds.ClientProxy;
-import com.rest.client.rest.events.RestChangedAfterConnectEvent;
-import com.rest.client.rest.events.RestConnectEvent;
-import com.rest.client.rest.events.RestObjectAddedEvent;
-import com.rest.client.rest.events.RestApiResponseArrivalEvent;
+import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientDB;
+import com.rest.client.rest.events.RestResponseEvent;
 
 import de.greenrobot.event.EventBus;
-import de.greenrobot.event.Subscribe;
+import io.realm.Realm;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -39,71 +36,39 @@ public class MainActivity extends AppCompatActivity {
 	 * Main layout for this component.
 	 */
 	private static final int LAYOUT = R.layout.activity_main;
-
+	/**
+	 * Message holder.
+	 */
+	private Snackbar mSnackbar;
 
 	//------------------------------------------------
 	//Subscribes, event-handlers
 	//------------------------------------------------
 
 	/**
-	 * Handler for {@link RestChangedAfterConnectEvent}.
+	 * Handler for {@link RestResponseEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link RestChangedAfterConnectEvent}.
+	 * 		Event {@link RestResponseEvent}.
 	 */
-	@Subscribe
-	public void onEventMainThread( RestChangedAfterConnectEvent e ) {
-		mBinding.getAdapter()
-				.notifyItemChanged( (int) e.getIndex() );
-	}
-
-	/**
-	 * Handler for {@link RestConnectEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestConnectEvent}.
-	 */
-	@Subscribe
-	public void onEventMainThread( RestConnectEvent e ) {
-		Snackbar.make(
-				mBinding.rootView,
-				"Network connected.",
-				Snackbar.LENGTH_SHORT
-		).show();
-	}
-
-	/**
-	 * Handler for {@link RestObjectAddedEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestObjectAddedEvent}.
-	 */
-	@Subscribe
-	public void onEventMainThread( RestObjectAddedEvent e ) {
-		Collections.sort(
-				mBinding.getAdapter()
-						.getData(),
-				new Comparator<ClientProxy>() {
-					@Override
-					public int compare( ClientProxy lhs, ClientProxy rhs ) {
-						return (int) ( rhs.getReqTime() - lhs.getReqTime() );
-					}
-				}
+	public void onEventMainThread( RestResponseEvent e ) {
+		EventBus.getDefault()
+				.removeStickyEvent( e );
+		if( mSnackbar != null && mSnackbar.isShown() ) {
+			mSnackbar.dismiss();
+		}
+		//Load all data(local).
+		RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
+											  .where( ClientDB.class )
+											  .findAll();
+		dbItems.sort(
+				"reqTime",
+				Sort.DESCENDING
 		);
 		mBinding.getAdapter()
-				.notifyDataSetChanged();
-	}
-
-	/**
-	 * Handler for {@link RestApiResponseArrivalEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestApiResponseArrivalEvent}.
-	 */
-	@Subscribe
-	public void onEventMainThread( RestApiResponseArrivalEvent e ) {
+				.setData( dbItems );
 		mBinding.getAdapter()
-				.notifyItemChanged( (int) e.getIndex() );
+				.notifyDataSetChanged();
 	}
 	//------------------------------------------------
 
@@ -149,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void initList() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mBinding.setAdapter( new ListAdapter<ClientProxy>() );
+		mBinding.setAdapter( new ListAdapter<ClientDB>() );
 	}
 
 
@@ -185,26 +150,39 @@ public class MainActivity extends AppCompatActivity {
 		initComponents();
 		initList();
 		initFAB();
+		mSnackbar = Snackbar.make(
+				mBinding.rootView,
+				"Network connected.",
+				Snackbar.LENGTH_INDEFINITE
+		);
+		mSnackbar.show();
+
+		App.Instance.getClientRestFireManager()
+					.install(
+							App.Instance,
+							Client.class
+					);
+		App.Instance.getClientRestFireManager().selectAll(ClientDB.class);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		App.Instance.getClientRestFireManager()
-					.install(
-							App.Instance,
-							mBinding.getAdapter().getData()
-					);
 		EventBus.getDefault()
-				.register( this );
+				.registerSticky( this );
 	}
 
 	@Override
 	protected void onPause() {
-		App.Instance.getClientRestFireManager()
-					.uninstall();
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		App.Instance.getClientRestFireManager()
+					.uninstall();
+		super.onDestroy();
 	}
 }

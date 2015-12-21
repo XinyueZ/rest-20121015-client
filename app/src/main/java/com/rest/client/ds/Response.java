@@ -5,7 +5,10 @@ import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import com.rest.client.rest.RestObject;
-import com.rest.client.rest.RestObjectProxy;
+
+import io.realm.Realm;
+import io.realm.RealmList;
+import io.realm.RealmObject;
 
 public final class Response extends RestObject {
 	@SerializedName("reqId")
@@ -18,14 +21,6 @@ public final class Response extends RestObject {
 	@SerializedName("result")
 	private List<Client> mResult;
 
-	public Response() {
-	}
-
-	public Response( String reqId, int status, List<Client> result ) {
-		mReqId = reqId;
-		mStatus = status;
-		mResult = result;
-	}
 
 	public int getStatus() {
 		return mStatus;
@@ -47,7 +42,29 @@ public final class Response extends RestObject {
 	}
 
 	@Override
-	public RestObjectProxy createProxy() {
-		return new ResponseProxy( this );
+	public RealmObject updateDB(int status) {
+		Realm db = Realm.getDefaultInstance();
+
+		RealmList<ClientDB> dbRealmList = new RealmList<>();
+		List<Client>        clientList  = getResult();
+		for( Client client : clientList ) {
+			dbRealmList
+				  .add( (ClientDB) client.updateDB( status));
+		}
+
+		db.beginTransaction();
+		ResponseDB dbItem = new ResponseDB();
+		dbItem.setReqId( getReqId() );
+		dbItem.setResponseStatus( getStatus() );
+		dbItem.setStatus( status );
+		dbItem.setResult( dbRealmList );
+		db.copyToRealmOrUpdate( dbItem );
+		db.commitTransaction();
+		return dbItem;
+	}
+
+	@Override
+	public Class<? extends RealmObject> DBType() {
+		return ResponseDB.class;
 	}
 }

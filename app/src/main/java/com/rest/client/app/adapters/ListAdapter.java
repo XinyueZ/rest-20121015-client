@@ -16,10 +16,11 @@ import android.view.ViewGroup;
 import com.rest.client.BR;
 import com.rest.client.R;
 import com.rest.client.app.App;
-import com.rest.client.rest.RestObjectProxy;
+
+import io.realm.RealmObject;
 
 
-public final class ListAdapter<T extends RestObjectProxy> extends RecyclerView.Adapter<ListAdapter.ViewHolder> implements Observable {
+public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapter<ListAdapter.ViewHolder> implements Observable {
 	private PropertyChangeRegistry mRegistry = new PropertyChangeRegistry();
 	private
 	@Bindable
@@ -27,7 +28,7 @@ public final class ListAdapter<T extends RestObjectProxy> extends RecyclerView.A
 	/**
 	 * Main layout for this component.
 	 */
-	private static final int               ITEM_LAYOUT  = R.layout.item_layout;
+	private static final int     ITEM_LAYOUT  = R.layout.item_layout;
 	/**
 	 * Data-source.
 	 */

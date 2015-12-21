@@ -55,16 +55,12 @@ public final class EditCommitDialogFragment extends DialogFragment {
 															   new DialogInterface.OnClickListener() {
 																   public void onClick( DialogInterface dialog, int whichButton ) {
 																	   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
-																		   String uuid = UUID.randomUUID()
-																							 .toString();
-																		   long time = System.currentTimeMillis();
-																		   String comment = Build.MODEL + "---" + mCommentEt.getText()
-																															.toString();
-																		   Client client = new Client(
-																				   uuid,
-																				   time,
-																				   comment
-																		   );
+																		   Client client = new Client();
+																		   client.setReqId( UUID.randomUUID()
+																								.toString() );
+																		   client.setReqTime( System.currentTimeMillis() );
+																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																															  .toString() );
 
 																		   App.Instance.getClientRestFireManager()
 																					   .save( client );

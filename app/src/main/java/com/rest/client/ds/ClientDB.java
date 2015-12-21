@@ -1,13 +1,16 @@
-package com.rest.client.rest;
+package com.rest.client.ds;
 
 
 import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.RealmClass;
 
 @RealmClass
-public   class RestPendingObject extends RealmObject {
+public   class ClientDB extends RealmObject {
+	@PrimaryKey
 	private String reqId;
 	private long   reqTime;
+	private String comment;
 	private int status;
 
 	public String getReqId() {
@@ -26,6 +29,15 @@ public   class RestPendingObject extends RealmObject {
 		this.reqTime = reqTime;
 	}
 
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment( String comment ) {
+		this.comment = comment;
+	}
+
+
 	public int getStatus() {
 		return status;
 	}
@@ -34,4 +46,3 @@ public   class RestPendingObject extends RealmObject {
 		this.status = status;
 	}
 }
-

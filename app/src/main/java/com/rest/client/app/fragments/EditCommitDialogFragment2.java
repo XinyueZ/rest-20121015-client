@@ -20,9 +20,6 @@ import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
-import com.rest.client.ds.ClientPending;
-
-import retrofit.Call;
 
 public final class EditCommitDialogFragment2 extends DialogFragment {
 	private EditText mCommentEt;
@@ -59,28 +56,17 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 															   new DialogInterface.OnClickListener() {
 																   public void onClick( DialogInterface dialog, int whichButton ) {
 																	   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
-																		   String uuid = UUID.randomUUID()
-																							 .toString();
-																		   long time = System.currentTimeMillis();
-																		   String comment = Build.MODEL + "---" + mCommentEt.getText()
-																															.toString();
-																		   Client client = new Client(
-																				   uuid,
-																				   time,
-																				   comment
-																		   );
-
-																		   ClientPending pendingObject = new ClientPending();
-																		   pendingObject.setReqId( uuid );
-																		   pendingObject.setReqTime( time );
-																		   pendingObject.setComment( comment );
-																		   Api          api        = Api.Retrofit.create( Api.class );
-																		   Call<Client> clientCall = api.insertClient( client );
+																		   Client client = new Client();
+																		   client.setReqId( UUID.randomUUID()
+																								.toString() );
+																		   client.setReqTime( System.currentTimeMillis() );
+																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																															  .toString() );
 																		   App.Instance.getClientRestApiManager()
 																					   .exec(
-																							   clientCall,
-																							   client,
-																							   pendingObject
+																							   Api.Retrofit.create( Api.class )
+																										   .addClient( client ),
+																							   client
 																					   );
 
 

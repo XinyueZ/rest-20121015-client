@@ -37,24 +37,20 @@ public final class AppGuardService extends GcmTaskService {
 
 	@Override
 	public int onRunTask( TaskParams taskParams ) {
-		mBackgroundRestFireManager = new RestFireManager(Client.class);
-		mBackgroundRestFireManager.init(
-				3,
-				getApplication()
-		);
 		Log.i(
 				TAG,
 				"onRunTask: Call by API."
 		);
-		String uuid = UUID.randomUUID()
-						  .toString();
-		long   time    = System.currentTimeMillis();
-		String comment = Build.MODEL + "---" + random();
-		Client client = new Client(
-				uuid,
-				time,
-				comment
+		mBackgroundRestFireManager = new RestFireManager();
+		mBackgroundRestFireManager.init(
+				3,
+				getApplication()
 		);
+		Client client = new Client();
+		client.setReqId(  UUID.randomUUID()
+							  .toString() );
+		client.setReqTime( System.currentTimeMillis() );
+		client.setComment( Build.MODEL + "---" + random() );
 		mBackgroundRestFireManager.save( client );
 		return GcmNetworkManager.RESULT_SUCCESS;
 	}

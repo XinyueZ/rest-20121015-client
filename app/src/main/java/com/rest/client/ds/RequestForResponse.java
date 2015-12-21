@@ -8,7 +8,7 @@ import com.rest.client.rest.RestObject;
 import io.realm.Realm;
 import io.realm.RealmObject;
 
-public class Client extends RestObject {
+public class RequestForResponse extends RestObject {
 
 	@SerializedName("reqId")
 	@JsonProperty("reqId")
@@ -16,9 +16,6 @@ public class Client extends RestObject {
 	@SerializedName("reqTime")
 	@JsonProperty("reqTime")
 	private long   mReqTime;
-	@SerializedName("comment")
-	@JsonProperty("comment")
-	private String mComment;
 
 	public void setReqId( String reqId ) {
 		mReqId = reqId;
@@ -26,10 +23,6 @@ public class Client extends RestObject {
 
 	public void setReqTime( long reqTime ) {
 		mReqTime = reqTime;
-	}
-
-	public void setComment( String comment ) {
-		mComment = comment;
 	}
 
 	public String getReqId() {
@@ -40,20 +33,15 @@ public class Client extends RestObject {
 		return mReqTime;
 	}
 
-	public String getComment() {
-		return mComment;
-	}
-
 
 	@Override
 	public RealmObject updateDB(int status) {
 		Realm db = Realm.getDefaultInstance();
 		db.beginTransaction();
-		ClientDB dbItem = new ClientDB();
+		RequestForResponseDB dbItem = new RequestForResponseDB();
 		dbItem.setReqId( getReqId() );
 		dbItem.setReqTime( getReqTime() );
-		dbItem.setComment( getComment() );
-		dbItem.setStatus( status );
+		dbItem.setStatus(status);
 		db.copyToRealmOrUpdate( dbItem );
 		db.commitTransaction();
 		return dbItem;
@@ -61,6 +49,6 @@ public class Client extends RestObject {
 
 	@Override
 	public Class<? extends RealmObject> DBType() {
-		return ClientDB.class;
+		return RequestForResponseDB.class;
 	}
 }

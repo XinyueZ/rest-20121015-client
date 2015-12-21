@@ -1,7 +1,12 @@
 package com.rest.client.rest;
 
 
+import io.realm.RealmObject;
+
 public abstract class RestObject {
+	public static final int NOT_SYNCED = 0;
+	public static final int SYNCED     = 1;
+
 	//Request ID --> must be "reqId" for json/gson/jackson.
 	public abstract String getReqId();
 
@@ -9,5 +14,7 @@ public abstract class RestObject {
 	public abstract long getReqTime();
 
 	//Proxy builder.
-	public abstract RestObjectProxy createProxy();
+	public abstract RealmObject updateDB(int status);
+
+	public abstract Class<? extends RealmObject> DBType();
 }

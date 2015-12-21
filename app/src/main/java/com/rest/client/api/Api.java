@@ -1,6 +1,8 @@
 package com.rest.client.api;
 
 import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientAddedResponse;
+import com.rest.client.ds.RequestForResponse;
 import com.rest.client.ds.Response;
 
 import retrofit.Call;
@@ -16,8 +18,8 @@ public interface Api {
 										.build();
 
 	@POST("/insert")
-	Call<Client> insertClient( @Body Client client );
+	Call<ClientAddedResponse> addClient( @Body Client client );
 
 	@POST("/list")
-	Call<Response> getList( @Body Client client );
+	Call<Response> getList( @Body RequestForResponse client );
 }

@@ -1,10 +1,8 @@
 package com.rest.client.rest;
 
-import java.util.List;
+import java.lang.reflect.Method;
 
 import android.app.Application;
-import android.support.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
@@ -13,17 +11,16 @@ import com.firebase.client.Firebase;
 import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
-import com.rest.client.ds.ClientProxy;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
-import com.rest.client.rest.events.RestChangedAfterConnectEvent;
-import com.rest.client.rest.events.RestConnectEvent;
-import com.rest.client.rest.events.RestObjectAddedEvent;
+import com.rest.client.rest.events.RestResponseEvent;
 import com.rest.client.rest.events.UpdateNetworkStatus;
 
 import de.greenrobot.event.EventBus;
-import de.greenrobot.event.Subscribe;
 import io.realm.Realm;
+import io.realm.RealmObject;
+import io.realm.RealmQuery;
+import io.realm.RealmResults;
 
 /**
  * Architecture for working with Firebase.
@@ -34,25 +31,15 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	private Firebase                    mDatabase;
+	private Firebase mDatabase;
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
-	private Realm                       mDB;
+	private Realm    mDB;
 	/**
 	 * The network connect status.
 	 */
-	private boolean                     mConnected;
-	/**
-	 * Meta class of {@link RestObject}.
-	 */
-	private Class<? extends RestObject> mRestClazz;
-	/**
-	 * Pool to hold data from Firebase.
-	 */
-	private
-	@Nullable
-	List<RestObjectProxy> mProxyPool;
+	private boolean  mConnected;
 
 	//------------------------------------------------
 	//Subscribes, event-handlers
@@ -64,7 +51,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * @param e
 	 * 		Event {@link AuthenticatedEvent}.
 	 */
-	@Subscribe
 	public void onEventMainThread( AuthenticatedEvent e ) {
 
 	}
@@ -75,33 +61,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * @param e
 	 * 		Event {@link AuthenticatedEvent}.
 	 */
-	@Subscribe
 	public void onEventMainThread( AuthenticationErrorEvent e ) {
 
 	}
 
-	/**
-	 * Handler for {@link RestObjectAddedEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestObjectAddedEvent}.
-	 */
-	@Subscribe
-	public void onEventMainThread( RestObjectAddedEvent e ) {
-
-	}
-
-
-	/**
-	 * Handler for {@link RestConnectEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestConnectEvent}.
-	 */
-	@Subscribe
-	public void onEventMainThread( RestConnectEvent e ) {
-		clearPending();
-	}
 
 	/**
 	 * Handler for {@link UpdateNetworkStatus}.
@@ -109,7 +72,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * @param e
 	 * 		Event {@link UpdateNetworkStatus}.
 	 */
-	@Subscribe
 	public void onEventMainThread( UpdateNetworkStatus e ) {
 		setConnected( e.isConnected() );
 	}
@@ -134,15 +96,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		mId = id;
 	}
 
-	/**
-	 * Constructor of {@link RestFireManager}.
-	 *
-	 * @param restClazz
-	 * 		The class meta of from server returned data.
-	 */
-	public RestFireManager( Class<? extends RestObject> restClazz ) {
-		mRestClazz = restClazz;
-	}
 
 	/**
 	 * Initialize the manager.
@@ -170,21 +123,19 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 *
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
-	 * @param proxyPool
-	 * 		Pool to hold data from Firebase.
+	 * @param restObjectClazz
+	 * 		The meta of response object.
 	 */
-	public void install( Application app, List<RestObjectProxy> proxyPool ) {
+	public void install( Application app, Class<? extends RestObject> restObjectClazz  ) {
 		if( !EventBus.getDefault()
 					 .isRegistered( this ) ) {
 			EventBus.getDefault()
 					.register( this );
 		}
-
+		mObjectType = restObjectClazz;
 		Firebase connectedRef = new Firebase( URL + "/.info/connected" );
 		connectedRef.addValueEventListener( mDBConnectStatusHandler );
 		mConnected = RestUtils.isNetworkAvailable( app );
-		setProxyPool( proxyPool );
-		mDatabase.addChildEventListener( this );
 	}
 
 	/**
@@ -226,23 +177,45 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		@Override
 		public void onDataChange( DataSnapshot snapshot ) {
 			boolean connected = snapshot.getValue( Boolean.class );
-			if( connected ) {
-				if( getProxyPool() != null ) {
-					int i = 0;
-					for( RestObjectProxy proxy : getProxyPool() ) {
-						if( proxy.getStatus() == ClientProxy.NOT_SYNCED ) {
-							proxy.setStatus( ClientProxy.SYNCED );
-							EventBus.getDefault()
-									.post( new RestChangedAfterConnectEvent(
-											getId(),
-											i
-									) );
+			if( connected && mDBType != null) {
+				RealmResults<? extends RealmObject> notSyncItems = mDB.where( mDBType )
+																	  .equalTo(
+																			  "status",
+																			  RestObject.NOT_SYNCED
+																	  )
+																	  .findAll();
+				if( notSyncItems.size() > 0 ) {
+					mDB.beginTransaction();
+					RealmObject item = notSyncItems.get( 0 );
+					while( item != null ) {
+						Method method;
+						try {
+							method = item.getClass()
+										 .getMethod(
+												 "setStatus",
+												 int.class
+										 );
+							method.invoke(
+									item,
+									RestObject.SYNCED
+							);
+						} catch( Exception e ) {
+							e.printStackTrace();
 						}
-						i++;
+						mDB.copyToRealmOrUpdate( item );
+						EventBus.getDefault()
+								.post( new RestResponseEvent(
+										getId(),
+										item
+								) );
+						if( notSyncItems.size() > 0 ) {
+							item = notSyncItems.get( 0 );
+						} else {
+							break;
+						}
 					}
+					mDB.commitTransaction();
 				}
-				EventBus.getDefault()
-						.post( new RestConnectEvent( getId() ) );
 			}
 		}
 
@@ -252,33 +225,6 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		}
 	};
 
-	/**
-	 * Remove all posted pending requests of offline.
-	 */
-	private void clearPending() {
-		boolean hasPending = mDB.where( RestPendingObject.class )
-								.count() > 0;
-		if( hasPending ) {
-			mDB.beginTransaction();
-			mDB.clear( RestPendingObject.class );
-			mDB.commitTransaction();
-		}
-	}
-
-	/**
-	 * Set pool to hold data from Firebase.
-	 */
-	public void setProxyPool( @Nullable List<RestObjectProxy> proxyPool ) {
-		mProxyPool = proxyPool;
-	}
-
-	/**
-	 * Get pool to hold data from Firebase.
-	 */
-	@Nullable
-	public List<RestObjectProxy> getProxyPool() {
-		return mProxyPool;
-	}
 
 	//[AuthResultHandler]
 	@Override
@@ -299,69 +245,64 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 				) );
 	}
 
+	private Class<?  extends RealmObject>   mDBType;
+	private Class<? extends RestObject>  mObjectType;
+
 
 	/**
 	 * Save data on Firebase.
 	 *
-	 * @param t
+	 * @param newData
 	 * 		{@link RestObject} to save on Firebase.
 	 */
-	public void save( RestObject t ) {
-		//TO PENDING QUEUE FOR OFFLINE.
-		//BECAUSE SOMETIMES THE SAVE IS
-		//DONE UNDER OFFLINE AND FIREBAES
-		//HANDLES IT LOCAL. IN ORDER TO MARK
-		//OFFLINE STATUS ON APP-CLIENT THE
-		//QUEUE IS USED.
-		if( !isConnected() ) {
-			mDB.beginTransaction();
-			RestPendingObject restPendingObject = new RestPendingObject();
-			restPendingObject.setReqId( t.getReqId() );
-			restPendingObject.setReqTime( t.getReqTime() );
-			mDB.copyToRealm( restPendingObject );
-			mDB.commitTransaction();
-		}
+	public void save( RestObject newData ) {
+		mDBType = newData.DBType();
+		newData.updateDB( !isConnected() ? RestObject.NOT_SYNCED : RestObject.SYNCED );
 		//SAVE ON SERVER.
-		mDatabase.child( t.getReqId() )
-				 .setValue( t );
+		mDatabase.child( newData.getReqId() )
+				 .setValue( newData );
 		mDatabase.push();
 	}
 
 
+	public void selectAll(Class<?  extends RealmObject> dbType) {
+		mDBType = dbType;
+		mDatabase.addChildEventListener( this );
+	}
+
 	//[ChildEventListener]
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
-		RestObject serverData = dataSnapshot.getValue( mRestClazz );
-		long count = mDB.where( RestPendingObject.class )
-						.equalTo(
-										"reqId",
-										serverData.getReqId()
-								)
-						.count();
-		int             status = count == 0 ? RestObjectProxy.SYNCED : RestObjectProxy.NOT_SYNCED;
-		RestObjectProxy proxy  = serverData.createProxy();
-		proxy.setStatus( status );
-		boolean find = false;
-
-		//TO ENSURE NO-DUPLICATED REQUESTS.
-		if( getProxyPool() != null ) {
-			for( RestObjectProxy polled : getProxyPool() ) {
-				if( TextUtils.equals(
-						polled.getReqId(),
-						proxy.getReqId()
-				) ) {
-					find = true;
-					break;
-				}
-			}
+		RestObject serverData = dataSnapshot.getValue( mObjectType );
+		RealmQuery<? extends RealmObject> notInLocal = mDB.where(  mDBType )
+														  .equalTo(
+																  "reqId",
+																  serverData.getReqId()
+														  );
+		RealmObject dbItem;
+		if( notInLocal.count() < 1 ) {
+			//NEW DATA FROM OTHER SIDE WHICH IS NOT SAVED LOCAL.
+			dbItem = serverData.updateDB( RestObject.SYNCED );
+		} else {
+			//UPDATE LOCAL STATUS.
+			RealmQuery<? extends RealmObject> qNotSynced = mDB.where( mDBType )
+															  .equalTo(
+																	  "reqId",
+																	  serverData.getReqId()
+															  )
+															  .equalTo(
+																	  "status",
+																	  RestObject.NOT_SYNCED
+															  );
+			//THIS REQUEST IS NOT SYNCED.
+			boolean notSynced = qNotSynced.count() > 0;
+			dbItem = serverData.updateDB( notSynced ? RestObject.NOT_SYNCED : RestObject.SYNCED );
 		}
-		if( !find ) {
-			if( getProxyPool() != null ) {
-				getProxyPool().add( proxy );
-			}
-			EventBus.getDefault()
-					.post( new RestObjectAddedEvent( getId() ) );
-		}
+		EventBus.getDefault()
+				.postSticky( new RestResponseEvent(
+						getId(),
+						dbItem
+				) );
 	}
 
 	@Override

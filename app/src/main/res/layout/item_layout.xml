@@ -6,7 +6,7 @@
 
         <import type="android.view.View" />
 
-        <import type="com.rest.client.ds.ClientProxy" />
+        <import type="com.rest.client.ds.ClientDB" />
 
         <import type="com.rest.client.utils.Utils" />
 
@@ -18,7 +18,7 @@
 
         <variable
             name="client"
-            type="ClientProxy" />
+            type="ClientDB" />
 
 
         <variable
@@ -62,7 +62,7 @@
                 android:layout_gravity="end"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_upload"
-                android:visibility="@{client.getStatus() == com.rest.client.ds.ClientProxy.NOT_SYNCED ? View.VISIBLE : View.INVISIBLE}" />
+                android:visibility="@{client.getStatus() == com.rest.client.rest.RestObject.NOT_SYNCED ? View.VISIBLE : View.INVISIBLE}" />
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </layout>
