@@ -11,7 +11,7 @@ import com.firebase.client.FirebaseError;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
 import com.rest.client.rest.events.RestResponseEvent;
-import com.rest.client.rest.events.UpdateNetworkStatus;
+import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -63,12 +63,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 
 
 	/**
-	 * Handler for {@link UpdateNetworkStatus}.
+	 * Handler for {@link UpdateNetworkStatusEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link UpdateNetworkStatus}.
+	 * 		Event {@link UpdateNetworkStatusEvent}.
 	 */
-	public void onEventMainThread( UpdateNetworkStatus e ) {
+	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
 		setConnected( e.isConnected() );
 	}
 	//------------------------------------------------
@@ -106,7 +106,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		mDB = Realm.getDefaultInstance();
 		Firebase.setAndroidContext( app );
 		mFirebase = new Firebase( URL );
-		mFirebase.keepSynced( true );
+		mFirebase.keepSynced( false );
 		mFirebase.authWithCustomToken(
 				AUTH,
 				this

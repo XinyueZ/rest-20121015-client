@@ -1,10 +1,10 @@
 package com.rest.client.rest.events;
 
 
-public final class UpdateNetworkStatus {
+public final class UpdateNetworkStatusEvent {
 	private boolean mConnected;
 
-	public UpdateNetworkStatus( boolean connected ) {
+	public UpdateNetworkStatusEvent( boolean connected ) {
 		mConnected = connected;
 	}
 

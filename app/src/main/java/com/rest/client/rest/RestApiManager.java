@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.events.RestResponseEvent;
-import com.rest.client.rest.events.UpdateNetworkStatus;
+import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -43,12 +43,12 @@ public class RestApiManager<LD extends RestObject, SD extends RestObject> implem
 
 
 	/**
-	 * Handler for {@link UpdateNetworkStatus}.
+	 * Handler for {@link UpdateNetworkStatusEvent}.
 	 *
 	 * @param e
-	 * 		Event {@link UpdateNetworkStatus}.
+	 * 		Event {@link UpdateNetworkStatusEvent}.
 	 */
-	public void onEventMainThread( UpdateNetworkStatus e ) {
+	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
 		if( e.isConnected() ) {
 			RealmResults<ClientDB> dbItems = Realm.getDefaultInstance( )
 												  .where( ClientDB.class )
