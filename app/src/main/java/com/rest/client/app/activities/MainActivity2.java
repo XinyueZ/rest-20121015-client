@@ -81,7 +81,7 @@ public class MainActivity2 extends AppCompatActivity {
 			mSnackbar.show();
 		} else {
 			mBinding.getAdapter()
-					.notifyDataSetChanged();
+					.notifyItemInserted(0);
 		}
 	}
 	//------------------------------------------------

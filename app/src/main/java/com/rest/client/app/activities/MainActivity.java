@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		mBinding.getAdapter()
-				.notifyDataSetChanged();
+				.notifyItemInserted(0);
 	}
 	//------------------------------------------------
 
