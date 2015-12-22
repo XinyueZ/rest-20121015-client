@@ -40,10 +40,6 @@ import android.support.multidex.MultiDexApplication;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
-import com.rest.client.ds.Client;
-import com.rest.client.ds.ClientAddedResponse;
-import com.rest.client.ds.RequestForResponse;
-import com.rest.client.ds.Response;
 import com.rest.client.rest.RestApiManager;
 import com.rest.client.rest.RestFireManager;
 
@@ -66,44 +62,31 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private RestFireManager                              mClientRestFireManager  = new RestFireManager();
-	private RestApiManager<Client, ClientAddedResponse>  mClientRestApiManager   = new RestApiManager<>();
-	private RestApiManager<RequestForResponse, Response> mResponseRestApiManager = new RestApiManager<>();
+	private RestFireManager mFireManager = new RestFireManager();
+	private RestApiManager  mApiManager  = new RestApiManager();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		RealmConfiguration config = new RealmConfiguration.Builder( this ).build();
 		Realm.setDefaultConfiguration( config );
-
 		startAppGuardService( this );
-		mClientRestFireManager.init(
-				0,
-				this
-		);
-		mResponseRestApiManager.init(
-				1
-		);
-		mClientRestApiManager.init(
-				2
-		);
+		mFireManager.onCreate( this );
+		mApiManager.onCreated();
 	}
 
-	public RestFireManager getClientRestFireManager() {
-		return mClientRestFireManager;
+	public RestFireManager getFireManager() {
+		return mFireManager;
 	}
 
-	public RestApiManager<Client, ClientAddedResponse> getClientRestApiManager() {
-		return mClientRestApiManager;
+	public RestApiManager getApiManager() {
+		return mApiManager;
 	}
 
-	public RestApiManager<RequestForResponse, Response> getResponseRestApiManager() {
-		return mResponseRestApiManager;
-	}
 
 	public static void startAppGuardService( Context cxt ) {
 		long scheduleSec = 60 * 2;
-		//long   scheduleSec = 10800L;
+		//		long   scheduleSec = 10800L;
 		long   flexSecs = 60L;
 		String tag      = System.currentTimeMillis() + "";
 		PeriodicTask scheduleTask = new PeriodicTask.Builder().setService( AppGuardService.class )

@@ -46,7 +46,7 @@ public class Client extends RestObject {
 
 
 	@Override
-	public RealmObject updateDB(int status) {
+	public RealmObject updateDB( int status ) {
 		Realm db = Realm.getDefaultInstance();
 		db.beginTransaction();
 		ClientDB dbItem = new ClientDB();
@@ -62,5 +62,15 @@ public class Client extends RestObject {
 	@Override
 	public Class<? extends RealmObject> DBType() {
 		return ClientDB.class;
+	}
+
+	@Override
+	public RestObject fromDB( RealmObject dbItem ) {
+		ClientDB clientDB = (ClientDB) dbItem;
+		Client client = new Client();
+		client.setReqId( clientDB.getReqId() );
+		client.setReqTime( clientDB.getReqTime() );
+		client.setComment( clientDB.getComment() );
+		return client;
 	}
 }

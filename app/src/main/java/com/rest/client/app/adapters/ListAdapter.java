@@ -1,6 +1,5 @@
 package com.rest.client.app.adapters;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import android.content.Context;
@@ -32,7 +31,7 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	/**
 	 * Data-source.
 	 */
-	private              List<T> mVisibleData = new LinkedList<>();
+	private              List<T> mVisibleData;
 
 	/**
 	 * Get current used data-source.

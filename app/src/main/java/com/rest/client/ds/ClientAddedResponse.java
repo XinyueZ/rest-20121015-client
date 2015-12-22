@@ -32,6 +32,10 @@ public class ClientAddedResponse extends RestObject {
 		return 0;
 	}
 
+	public int getStatus() {
+		return mStatus;
+	}
+
 	@Override
 	public RealmObject updateDB(int status) {
 		Realm db = Realm.getDefaultInstance();

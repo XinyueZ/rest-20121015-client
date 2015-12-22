@@ -62,7 +62,7 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 																		   client.setReqTime( System.currentTimeMillis() );
 																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
 																															  .toString() );
-																		   App.Instance.getClientRestApiManager()
+																		   App.Instance.getApiManager()
 																					   .exec(
 																							   Api.Retrofit.create( Api.class )
 																										   .addClient( client ),

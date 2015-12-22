@@ -9,6 +9,7 @@ import com.rest.client.rest.RestObject;
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.RealmObject;
+import io.realm.RealmResults;
 
 public final class Response extends RestObject {
 	@SerializedName("reqId")
@@ -42,14 +43,13 @@ public final class Response extends RestObject {
 	}
 
 	@Override
-	public RealmObject updateDB(int status) {
+	public RealmObject updateDB( int status ) {
 		Realm db = Realm.getDefaultInstance();
 
 		RealmList<ClientDB> dbRealmList = new RealmList<>();
 		List<Client>        clientList  = getResult();
 		for( Client client : clientList ) {
-			dbRealmList
-				  .add( (ClientDB) client.updateDB( status));
+			dbRealmList.add( (ClientDB) client.updateDB( status ) );
 		}
 
 		db.beginTransaction();
@@ -59,6 +59,17 @@ public final class Response extends RestObject {
 		dbItem.setStatus( status );
 		dbItem.setResult( dbRealmList );
 		db.copyToRealmOrUpdate( dbItem );
+		db.commitTransaction();
+
+		RealmResults<RequestForResponseDB> reqItemDbs = db.where( RequestForResponseDB.class )
+														  .equalTo(
+																  "reqId",
+																  getReqId()
+														  )
+														  .findAllAsync();
+		RequestForResponseDB reqItemDb = reqItemDbs.first();
+		db.beginTransaction();
+		reqItemDb.setStatus( status );
 		db.commitTransaction();
 		return dbItem;
 	}

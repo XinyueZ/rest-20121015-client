@@ -62,7 +62,7 @@ public final class EditCommitDialogFragment extends DialogFragment {
 																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
 																															  .toString() );
 
-																		   App.Instance.getClientRestFireManager()
+																		   App.Instance.getFireManager()
 																					   .save( client );
 
 																		   dismiss();

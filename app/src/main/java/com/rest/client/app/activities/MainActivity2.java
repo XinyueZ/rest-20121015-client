@@ -1,5 +1,6 @@
 package com.rest.client.app.activities;
 
+import java.util.List;
 import java.util.UUID;
 
 import android.app.Activity;
@@ -9,11 +10,11 @@ import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.view.View.OnClickListener;
 
 import com.rest.client.R;
 import com.rest.client.api.Api;
@@ -21,9 +22,13 @@ import com.rest.client.app.App;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
+import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.RequestForResponse;
+import com.rest.client.rest.ExecutePending;
+import com.rest.client.rest.RestObject;
 import com.rest.client.rest.events.RestResponseEvent;
+import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
@@ -50,6 +55,17 @@ public class MainActivity2 extends AppCompatActivity {
 	//Subscribes, event-handlers
 	//------------------------------------------------
 
+	/**
+	 * Handler for {@link UpdateNetworkStatusEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link UpdateNetworkStatusEvent}.
+	 */
+	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
+		if( e.isConnected() ) {
+			sendPending();
+		}
+	}
 
 	/**
 	 * Handler for {@link RestResponseEvent}.
@@ -58,30 +74,18 @@ public class MainActivity2 extends AppCompatActivity {
 	 * 		Event {@link RestResponseEvent}.
 	 */
 	public void onEventMainThread( RestResponseEvent e ) {
+		EventBus.getDefault()
+				.removeStickyEvent( e );
 		if( mSnackbar != null && mSnackbar.isShown() ) {
 			mSnackbar.dismiss();
 		}
-		if( mBinding.getAdapter().getItemCount() < 1 ) {
-			//UI update for no-data status.
-			mBinding.loadingPb.setVisibility( View.INVISIBLE );
-			mSnackbar = Snackbar.make(
-					mBinding.rootView,
-					"No response...",
-					Snackbar.LENGTH_INDEFINITE
-			)
-								.setAction(
-										"Reload",
-										new OnClickListener() {
-											@Override
-											public void onClick( View v ) {
-												load();
-											}
-										}
-								);
-			mSnackbar.show();
-		} else {
-			mBinding.getAdapter()
-					.notifyItemInserted(0);
+		mBinding.contentSrl.setRefreshing( false );
+		if( mBinding.getAdapter() != null ) {
+			if( mBinding.getAdapter()
+						.getItemCount() > 0 ) {
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
+			}
 		}
 	}
 	//------------------------------------------------
@@ -153,27 +157,25 @@ public class MainActivity2 extends AppCompatActivity {
 		dbItems.addChangeListener( new RealmChangeListener() {
 			@Override
 			public void onChange() {
-				dbItems.sort(
-						"reqTime",
-						Sort.DESCENDING
-				);
-				mBinding.setAdapter(  new ListAdapter<ClientDB>().setData( dbItems ) );
+				if( dbItems.isLoaded() ) {
+					dbItems.sort(
+							"reqTime",
+							Sort.DESCENDING
+					);
+					mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
+					if( mSnackbar != null && mSnackbar.isShown() ) {
+						mSnackbar.dismiss();
+					}
+				}
+				dbItems.removeChangeListener( this );
 			}
 		} );
 	}
 
 
 	private void load() {
-		RequestForResponse rfr = new RequestForResponse();
-		rfr.setReqId( UUID.randomUUID()
-						  .toString() );
-		rfr.setReqTime( System.currentTimeMillis() );
-		App.Instance.getResponseRestApiManager()
-					.exec(
-							Api.Retrofit.create( Api.class )
-										.getList( rfr ),
-							rfr
-					);
+		loadList();
+		sendPending();
 		if( mSnackbar != null && mSnackbar.isShown() ) {
 			mSnackbar.dismiss();
 		}
@@ -185,16 +187,61 @@ public class MainActivity2 extends AppCompatActivity {
 		mSnackbar.show();
 	}
 
+	private void sendPending() {
+		App.Instance.getApiManager()
+					.executePending( new ExecutePending() {
+						@Override
+						public void executePending( List<RestObject> pendingItems ) {
+							for( RestObject object : pendingItems ) {
+								Client client = (Client) object;
+								App.Instance.getApiManager()
+											.exec(
+													Api.Retrofit.create( Api.class )
+																.addClient( client ),
+													client
+											);
+							}
+						}
+
+						@Override
+						public RestObject getPending() {
+							return new Client();
+						}
+					} );
+	}
+
+	private void loadList() {
+		RequestForResponse rfr = new RequestForResponse();
+		rfr.setReqId( UUID.randomUUID()
+						  .toString() );
+		rfr.setReqTime( System.currentTimeMillis() );
+		App.Instance.getApiManager()
+					.exec(
+							Api.Retrofit.create( Api.class )
+										.getList( rfr ),
+							rfr
+					);
+	}
+
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
 		initComponents();
 		initList();
 		initFAB();
-		App.Instance.getResponseRestApiManager()
-					.install();
-		App.Instance.getClientRestApiManager()
-					.install();
+		load();
+		mBinding.contentSrl.setColorSchemeResources(
+				R.color.color_pocket_1,
+				R.color.color_pocket_2,
+				R.color.color_pocket_3,
+				R.color.color_pocket_4
+		);
+		mBinding.contentSrl.setOnRefreshListener( new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				loadList();
+			}
+		} );
 	}
 
 	@Override
@@ -202,7 +249,7 @@ public class MainActivity2 extends AppCompatActivity {
 		super.onResume();
 		EventBus.getDefault()
 				.registerSticky( this );
-		load();
+
 	}
 
 	@Override
@@ -210,14 +257,5 @@ public class MainActivity2 extends AppCompatActivity {
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		App.Instance.getResponseRestApiManager()
-					.uninstall();
-		App.Instance.getClientRestApiManager()
-					.uninstall();
-		super.onDestroy();
 	}
 }

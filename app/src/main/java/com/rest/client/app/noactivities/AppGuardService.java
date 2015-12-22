@@ -14,7 +14,7 @@ import com.rest.client.ds.Client;
 import com.rest.client.rest.RestFireManager;
 
 public final class AppGuardService extends GcmTaskService {
-	private static final String          TAG                        = "AppGuardService";
+	private static final String TAG = "AppGuardService";
 
 	public AppGuardService() {
 		super();
@@ -41,13 +41,10 @@ public final class AppGuardService extends GcmTaskService {
 				"onRunTask: Call by API."
 		);
 		RestFireManager mgr = new RestFireManager();
-		mgr.init(
-				3,
-				getApplication()
-		);
+		mgr.onCreate( getApplication() );
 		Client client = new Client();
-		client.setReqId(  UUID.randomUUID()
-							  .toString() );
+		client.setReqId( UUID.randomUUID()
+							 .toString() );
 		client.setReqTime( System.currentTimeMillis() );
 		client.setComment( Build.MODEL + "--Bk---" + random() );
 		mgr.saveInBackground( client );

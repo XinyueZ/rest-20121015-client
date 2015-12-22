@@ -11,12 +11,9 @@ import com.firebase.client.FirebaseError;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
 import com.rest.client.rest.events.RestResponseEvent;
-import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
-import io.realm.Realm;
 import io.realm.RealmObject;
-import io.realm.RealmQuery;
 
 /**
  * Architecture for working with Firebase.
@@ -27,140 +24,44 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	private Firebase mFirebase;
-	/**
-	 * Local storage for storing pending queue and back-off data.
-	 */
-	private Realm    mDB;
-	/**
-	 * The network connect status.
-	 */
-	private boolean  mConnected;
-
-	//------------------------------------------------
-	//Subscribes, event-handlers
-	//------------------------------------------------
-
-	/**
-	 * Handler for {@link AuthenticatedEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link AuthenticatedEvent}.
-	 */
-	public void onEventMainThread( AuthenticatedEvent e ) {
-
-	}
-
-	/**
-	 * Handler for {@link AuthenticatedEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link AuthenticatedEvent}.
-	 */
-	public void onEventMainThread( AuthenticationErrorEvent e ) {
-
-	}
-
-
-	/**
-	 * Handler for {@link UpdateNetworkStatusEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link UpdateNetworkStatusEvent}.
-	 */
-	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
-		setConnected( e.isConnected() );
-	}
-	//------------------------------------------------
-
+	private Firebase                    mFirebase;
+	private Class<? extends RestObject> mRespType;
 	/**
 	 * The id of manger.
 	 */
-	private int mId;
-
-	/**
-	 * The id of manger.
-	 */
-	public int getId() {
-		return mId;
-	}
-
-	/**
-	 * Set the id of manger.
-	 */
-	public void setId( int id ) {
-		mId = id;
-	}
+	private long                        mId;
 
 
 	/**
 	 * Initialize the manager.
 	 *
-	 * @param id
-	 * 		Manager id.
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
 	 */
-	public void init( int id, Application app ) {
-		setId( id );
-		mDB = Realm.getDefaultInstance();
+	public void onCreate( Application app ) {
+		setId( System.currentTimeMillis() );
 		Firebase.setAndroidContext( app );
 		mFirebase = new Firebase( URL );
-		mFirebase.keepSynced( false );
+		mFirebase.keepSynced( true );
 		mFirebase.authWithCustomToken(
 				AUTH,
 				this
 		);
 	}
 
-
 	/**
-	 * Setup the manager on UI.
-	 *
-	 * @param app
-	 * 		{@link Application} The application domain to control manager.
+	 * Set the id of manger.
 	 */
-	public void install( Application app ) {
-		if( !EventBus.getDefault()
-					 .isRegistered( this ) ) {
-			EventBus.getDefault()
-					.register( this );
-		}
-		mConnected = RestUtils.isNetworkAvailable( app );
+	private void setId( long id ) {
+		mId = id;
 	}
 
 	/**
-	 * Remove the manager from UI.
+	 * Called when do not need manager.
 	 */
-	public void uninstall() {
-		if( EventBus.getDefault()
-					.isRegistered( this ) ) {
-			EventBus.getDefault()
-					.unregister( this );
-		}
+	public void onDestory() {
 		mFirebase.removeEventListener( this );
 	}
-
-	/**
-	 * Get network connect status.
-	 *
-	 * @return {@code true} if connection is o.k.
-	 */
-	protected boolean isConnected() {
-		return mConnected;
-	}
-
-	/**
-	 * Set network status.
-	 *
-	 * @param connected
-	 * 		{@code true} if connection is o.k.
-	 */
-	public void setConnected( boolean connected ) {
-		mConnected = connected;
-	}
-
-
 
 
 	//[AuthResultHandler]
@@ -168,7 +69,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	public void onAuthenticated( AuthData authData ) {
 		EventBus.getDefault()
 				.post( new AuthenticatedEvent(
-						getId(),
+						mId,
 						authData
 				) );
 	}
@@ -177,13 +78,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	public void onAuthenticationError( FirebaseError firebaseError ) {
 		EventBus.getDefault()
 				.post( new AuthenticationErrorEvent(
-						getId(),
+						mId,
 						firebaseError
 				) );
 	}
-
-	private Class<? extends RealmObject> mDBType;
-	private Class<? extends RestObject>  mRespType;
 
 
 	/**
@@ -194,7 +92,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void save( RestObject newData ) {
 		mFirebase.addChildEventListener( this );
-		saveInBackground(newData);
+		saveInBackground( newData );
 	}
 
 	/**
@@ -205,9 +103,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void saveInBackground( RestObject newData ) {
 		mRespType = newData.getClass();
-		mDBType = newData.DBType();
-		newData.updateDB( !isConnected() ? RestObject.NOT_SYNCED : RestObject.SYNCED );
-		//SAVE ON SERVER.
+		newData.updateDB( RestObject.NOT_SYNCED );
 		mFirebase.child( newData.getReqId() )
 				 .setValue( newData );
 		mFirebase.push();
@@ -215,46 +111,27 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 
 	/**
 	 * Get all data from Firebase of type {@code respType}.
-	 * @param dbType The type of objects saved local to represent {@code respType}.
-	 * @param respType Server data type {@code respType}.
+	 *
+	 * @param respType
+	 * 		Server data type {@code respType}.
 	 */
-	public void selectAll( Class<? extends RealmObject> dbType, Class<? extends RestObject> respType ) {
-		mDBType = dbType;
+	public void selectAll( Class<? extends RestObject> respType ) {
 		mRespType = respType;
 		mFirebase.addChildEventListener( this );
+	}
+
+	public void executePending( ExecutePending exp ) {
+		RestUtils.executePending( exp );
 	}
 
 	//[ChildEventListener]
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
-		RestObject serverData = dataSnapshot.getValue( mRespType );
-		RealmQuery<? extends RealmObject> notInLocal = mDB.where( mDBType )
-														  .equalTo(
-																  "reqId",
-																  serverData.getReqId()
-														  );
-		RealmObject dbItem;
-		if( notInLocal.count() < 1 ) {
-			//NEW DATA FROM OTHER SIDE WHICH IS NOT SAVED LOCAL.
-			dbItem = serverData.updateDB( RestObject.SYNCED );
-		} else {
-			//UPDATE LOCAL STATUS.
-			RealmQuery<? extends RealmObject> qNotSynced = mDB.where( mDBType )
-															  .equalTo(
-																	  "reqId",
-																	  serverData.getReqId()
-															  )
-															  .equalTo(
-																	  "status",
-																	  RestObject.NOT_SYNCED
-															  );
-			//THIS REQUEST IS NOT SYNCED.
-			boolean notSynced = qNotSynced.count() > 0;
-			dbItem = serverData.updateDB( notSynced ? RestObject.NOT_SYNCED : RestObject.SYNCED );
-		}
+		RestObject  serverData = dataSnapshot.getValue( mRespType );
+		RealmObject dbItem     = serverData.updateDB( RestObject.SYNCED );
 		EventBus.getDefault()
 				.postSticky( new RestResponseEvent(
-						getId(),
+						mId,
 						dbItem
 				) );
 	}

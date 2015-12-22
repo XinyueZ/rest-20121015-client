@@ -1,6 +1,8 @@
 package com.rest.client.rest;
 
 
+import android.support.annotation.Nullable;
+
 import io.realm.RealmObject;
 
 public abstract class RestObject {
@@ -17,4 +19,9 @@ public abstract class RestObject {
 	public abstract RealmObject updateDB(int status);
 
 	public abstract Class<? extends RealmObject> DBType();
+
+	public  @Nullable
+	RestObject fromDB( RealmObject dbItem){
+		return null;
+	}
 }

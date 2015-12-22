@@ -4,12 +4,12 @@ package com.rest.client.rest.events;
 import com.firebase.client.FirebaseError;
 
 public final class AuthenticationErrorEvent {
-	private int mId;
+	private long mId;
 
 	private FirebaseError mFirebaseError;
 
 
-	public AuthenticationErrorEvent( int id, FirebaseError firebaseError ) {
+	public AuthenticationErrorEvent( long id, FirebaseError firebaseError ) {
 		mId = id;
 		mFirebaseError = firebaseError;
 	}
@@ -19,7 +19,7 @@ public final class AuthenticationErrorEvent {
 		return mFirebaseError;
 	}
 
-	public int getId() {
+	public long getId() {
 		return mId;
 	}
 }

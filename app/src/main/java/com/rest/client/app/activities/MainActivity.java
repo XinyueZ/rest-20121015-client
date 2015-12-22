@@ -1,9 +1,12 @@
 package com.rest.client.app.activities;
 
+import java.util.List;
+
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +21,8 @@ import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
+import com.rest.client.rest.ExecutePending;
+import com.rest.client.rest.RestObject;
 import com.rest.client.rest.events.RestResponseEvent;
 
 import de.greenrobot.event.EventBus;
@@ -58,9 +63,14 @@ public class MainActivity extends AppCompatActivity {
 		if( mSnackbar != null && mSnackbar.isShown() ) {
 			mSnackbar.dismiss();
 		}
-
-		mBinding.getAdapter()
-				.notifyItemInserted(0);
+		mBinding.contentSrl.setRefreshing( false );
+		if( mBinding.getAdapter() != null ) {
+			if( mBinding.getAdapter()
+						.getItemCount() > 0 ) {
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
+			}
+		}
 	}
 
 
@@ -110,16 +120,22 @@ public class MainActivity extends AppCompatActivity {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
 		final RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
-											  .where( ClientDB.class )
-											  .findAllAsync();
+													.where( ClientDB.class )
+													.findAllAsync();
 		dbItems.addChangeListener( new RealmChangeListener() {
 			@Override
 			public void onChange() {
-				dbItems.sort(
-						"reqTime",
-						Sort.DESCENDING
-				);
-				mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
+				if(dbItems.isLoaded()) {
+					dbItems.sort(
+							"reqTime",
+							Sort.DESCENDING
+					);
+					mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
+					if( mSnackbar != null && mSnackbar.isShown() ) {
+						mSnackbar.dismiss();
+					}
+				}
+				dbItems.removeChangeListener( this );
 			}
 		} );
 	}
@@ -157,21 +173,55 @@ public class MainActivity extends AppCompatActivity {
 		initComponents();
 		initList();
 		initFAB();
+		load();
+		mBinding.contentSrl.setColorSchemeResources(
+				R.color.color_pocket_1,
+				R.color.color_pocket_2,
+				R.color.color_pocket_3,
+				R.color.color_pocket_4
+		);
+		mBinding.contentSrl.setOnRefreshListener( new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				loadList();
+			}
+		} );
+
+	}
+
+	private void load() {
+		loadList();
+		sendPending();
 		mSnackbar = Snackbar.make(
 				mBinding.rootView,
-				"Network connected.",
+				"Getting client list...",
 				Snackbar.LENGTH_INDEFINITE
 		);
 		mSnackbar.show();
+	}
 
-		App.Instance.getClientRestFireManager()
-					.install(
-							App.Instance
-					);
-		App.Instance.getClientRestFireManager()
-					.selectAll( ClientDB.class,
-								Client.class
-					);
+	private void loadList() {
+		App.Instance.getFireManager()
+					.selectAll( Client.class );
+	}
+
+	private void sendPending() {
+		App.Instance.getFireManager()
+					.executePending( new ExecutePending() {
+						@Override
+						public void executePending( List<RestObject> pendingItems ) {
+							for( RestObject object : pendingItems ) {
+								Client client = (Client) object;
+								App.Instance.getFireManager()
+											.saveInBackground( client );
+							}
+						}
+
+						@Override
+						public RestObject getPending() {
+							return new Client();
+						}
+					} );
 	}
 
 	@Override
@@ -190,8 +240,8 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		App.Instance.getClientRestFireManager()
-					.uninstall();
+		App.Instance.getFireManager()
+					.onDestory();
 		super.onDestroy();
 	}
 }

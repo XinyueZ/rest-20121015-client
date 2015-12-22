@@ -4,11 +4,11 @@ package com.rest.client.rest.events;
 import com.firebase.client.AuthData;
 
 public final class AuthenticatedEvent {
-	private int      mId;
+	private long      mId;
 	private AuthData mAuthData;
 
 
-	public AuthenticatedEvent( int id, AuthData authData ) {
+	public AuthenticatedEvent( long id, AuthData authData ) {
 		mId = id;
 		mAuthData = authData;
 	}
@@ -18,7 +18,7 @@ public final class AuthenticatedEvent {
 		return mAuthData;
 	}
 
-	public int getId() {
+	public long getId() {
 		return mId;
 	}
 }
