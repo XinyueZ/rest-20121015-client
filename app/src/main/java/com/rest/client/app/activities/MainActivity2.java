@@ -14,6 +14,9 @@ import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.rest.client.R;
@@ -27,7 +30,6 @@ import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.RequestForResponse;
 import com.rest.client.rest.ExecutePending;
 import com.rest.client.rest.RestObject;
-import com.rest.client.rest.events.RestResponseEvent;
 import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
@@ -67,27 +69,6 @@ public class MainActivity2 extends AppCompatActivity {
 		}
 	}
 
-	/**
-	 * Handler for {@link RestResponseEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link RestResponseEvent}.
-	 */
-	public void onEventMainThread( RestResponseEvent e ) {
-		EventBus.getDefault()
-				.removeStickyEvent( e );
-		if( mSnackbar != null && mSnackbar.isShown() ) {
-			mSnackbar.dismiss();
-		}
-		mBinding.contentSrl.setRefreshing( false );
-		if( mBinding.getAdapter() != null ) {
-			if( mBinding.getAdapter()
-						.getItemCount() > 0 ) {
-				mBinding.getAdapter()
-						.notifyDataSetChanged();
-			}
-		}
-	}
 	//------------------------------------------------
 
 	/**
@@ -148,29 +129,49 @@ public class MainActivity2 extends AppCompatActivity {
 		} );
 	}
 
-	private void initList() {
+	private void updateListView() {
+		if( mSnackbar != null && mSnackbar.isShown() ) {
+			mSnackbar.dismiss();
+		}
+		mBinding.contentSrl.setRefreshing( false );
+		if( mBinding.getAdapter() != null ) {
+			if( mBinding.getAdapter()
+						.getItemCount() > 0 ) {
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
+			}
+		}
+	}
+
+	private void initListView() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
-		final RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
-													.where( ClientDB.class )
+		mDBData = Realm.getDefaultInstance().where( ClientDB.class )
 													.findAllAsync();
-		dbItems.addChangeListener( new RealmChangeListener() {
-			@Override
-			public void onChange() {
-				if( dbItems.isLoaded() ) {
-					dbItems.sort(
-							"reqTime",
-							Sort.DESCENDING
-					);
-					mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
-					if( mSnackbar != null && mSnackbar.isShown() ) {
-						mSnackbar.dismiss();
-					}
-				}
-				dbItems.removeChangeListener( this );
-			}
-		} );
+		mDBData.addChangeListener( mListListener );
 	}
+
+	private RealmResults<ClientDB> mDBData;
+	private RealmChangeListener mListListener = new RealmChangeListener() {
+		@Override
+		public void onChange() {
+			if( mDBData.isLoaded() ) {
+				mDBData.sort(
+						"reqTime",
+						Sort.DESCENDING
+				);
+				mBinding.setAdapter( new ListAdapter<ClientDB>().setData( mDBData ) );
+				if( mSnackbar != null && mSnackbar.isShown() ) {
+					mSnackbar.dismiss();
+				}
+			}
+			//dbItems.removeChangeListener( this );
+			Log.d(
+					getClass().getName(),
+					"ListView onChanged"
+			);
+		}
+	};
 
 
 	private void load() {
@@ -204,7 +205,7 @@ public class MainActivity2 extends AppCompatActivity {
 						}
 
 						@Override
-						public RestObject getPending() {
+						public RestObject build() {
 							return new Client();
 						}
 					} );
@@ -224,10 +225,36 @@ public class MainActivity2 extends AppCompatActivity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu( Menu menu ) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(
+				R.menu.menu_main_2,
+				menu
+		);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected( MenuItem item ) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+
+		//noinspection SimplifiableIfStatement
+		if( id == R.id.action_api_example ) {
+			MainActivity.showInstance( this );
+			return true;
+		}
+
+		return super.onOptionsItemSelected( item );
+	}
+
+	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
 		initComponents();
-		initList();
+		initListView();
 		initFAB();
 		load();
 		mBinding.contentSrl.setColorSchemeResources(
@@ -257,5 +284,13 @@ public class MainActivity2 extends AppCompatActivity {
 		EventBus.getDefault()
 				.unregister( this );
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		if(mDBData != null && mListListener != null) {
+			mDBData.removeChangeListener( mListListener );
+		}
+		super.onDestroy();
 	}
 }

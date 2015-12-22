@@ -2,14 +2,18 @@ package com.rest.client.app.activities;
 
 import java.util.List;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,9 +27,7 @@ import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.ExecutePending;
 import com.rest.client.rest.RestObject;
-import com.rest.client.rest.events.RestResponseEvent;
 
-import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -47,34 +49,25 @@ public class MainActivity extends AppCompatActivity {
 	 */
 	private Snackbar mSnackbar;
 
-	//------------------------------------------------
-	//Subscribes, event-handlers
-	//------------------------------------------------
 
 	/**
-	 * Handler for {@link RestResponseEvent}.
+	 * Show single instance of {@link MainActivity}
 	 *
-	 * @param e
-	 * 		Event {@link RestResponseEvent}.
+	 * @param cxt
+	 * 		{@link Activity}.
 	 */
-	public void onEventMainThread( RestResponseEvent e ) {
-		EventBus.getDefault()
-				.removeStickyEvent( e );
-		if( mSnackbar != null && mSnackbar.isShown() ) {
-			mSnackbar.dismiss();
-		}
-		mBinding.contentSrl.setRefreshing( false );
-		if( mBinding.getAdapter() != null ) {
-			if( mBinding.getAdapter()
-						.getItemCount() > 0 ) {
-				mBinding.getAdapter()
-						.notifyDataSetChanged();
-			}
-		}
+	public static void showInstance( Activity cxt ) {
+		Intent intent = new Intent(
+				cxt,
+				MainActivity.class
+		);
+		intent.setFlags( Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP );
+		ActivityCompat.startActivity(
+				cxt,
+				intent,
+				null
+		);
 	}
-
-
-	//------------------------------------------------
 
 
 	private void initComponents() {
@@ -116,29 +109,50 @@ public class MainActivity extends AppCompatActivity {
 		} );
 	}
 
-	private void initList() {
+	private void updateListView() {
+		if( mSnackbar != null && mSnackbar.isShown() ) {
+			mSnackbar.dismiss();
+		}
+		mBinding.contentSrl.setRefreshing( false );
+		if( mBinding.getAdapter() != null ) {
+			if( mBinding.getAdapter()
+						.getItemCount() > 0 ) {
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
+			}
+		}
+	}
+
+	private void initListView() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
-		final RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
-													.where( ClientDB.class )
-													.findAllAsync();
-		dbItems.addChangeListener( new RealmChangeListener() {
-			@Override
-			public void onChange() {
-				if(dbItems.isLoaded()) {
-					dbItems.sort(
-							"reqTime",
-							Sort.DESCENDING
-					);
-					mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
-					if( mSnackbar != null && mSnackbar.isShown() ) {
-						mSnackbar.dismiss();
-					}
-				}
-				dbItems.removeChangeListener( this );
-			}
-		} );
+		mDBData = Realm.getDefaultInstance()
+					   .where( ClientDB.class )
+					   .findAllAsync();
+		mDBData.addChangeListener( mListListener );
 	}
+
+	private RealmResults<ClientDB> mDBData;
+	private RealmChangeListener mListListener = new RealmChangeListener() {
+		@Override
+		public void onChange() {
+			if( mDBData.isLoaded() ) {
+				mDBData.sort(
+						"reqTime",
+						Sort.DESCENDING
+				);
+				mBinding.setAdapter( new ListAdapter<ClientDB>().setData( mDBData ) );
+				if( mSnackbar != null && mSnackbar.isShown() ) {
+					mSnackbar.dismiss();
+				}
+			}
+			//dbItems.removeChangeListener( this );
+			Log.d(
+					getClass().getName(),
+					"ListView onChanged"
+			);
+		}
+	};
 
 
 	@Override
@@ -160,33 +174,11 @@ public class MainActivity extends AppCompatActivity {
 
 		//noinspection SimplifiableIfStatement
 		if( id == R.id.action_api_example ) {
-			MainActivity2.showInstance( MainActivity.this );
+			MainActivity2.showInstance( this );
 			return true;
 		}
 
 		return super.onOptionsItemSelected( item );
-	}
-
-	@Override
-	protected void onCreate( Bundle savedInstanceState ) {
-		super.onCreate( savedInstanceState );
-		initComponents();
-		initList();
-		initFAB();
-		load();
-		mBinding.contentSrl.setColorSchemeResources(
-				R.color.color_pocket_1,
-				R.color.color_pocket_2,
-				R.color.color_pocket_3,
-				R.color.color_pocket_4
-		);
-		mBinding.contentSrl.setOnRefreshListener( new OnRefreshListener() {
-			@Override
-			public void onRefresh() {
-				loadList();
-			}
-		} );
-
 	}
 
 	private void load() {
@@ -218,30 +210,42 @@ public class MainActivity extends AppCompatActivity {
 						}
 
 						@Override
-						public RestObject getPending() {
+						public RestObject build() {
 							return new Client();
 						}
 					} );
 	}
 
 	@Override
-	protected void onResume() {
-		super.onResume();
-		EventBus.getDefault()
-				.registerSticky( this );
+	protected void onCreate( Bundle savedInstanceState ) {
+		super.onCreate( savedInstanceState );
+		initComponents();
+		initListView();
+		initFAB();
+		load();
+		mBinding.contentSrl.setColorSchemeResources(
+				R.color.color_pocket_1,
+				R.color.color_pocket_2,
+				R.color.color_pocket_3,
+				R.color.color_pocket_4
+		);
+		mBinding.contentSrl.setOnRefreshListener( new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				loadList();
+			}
+		} );
+
 	}
 
-	@Override
-	protected void onPause() {
-		EventBus.getDefault()
-				.unregister( this );
-		super.onPause();
-	}
 
 	@Override
 	protected void onDestroy() {
+		if( mDBData != null && mListListener != null ) {
+			mDBData.removeChangeListener( mListListener );
+		}
 		App.Instance.getFireManager()
-					.onDestory();
+					.onDestroy();
 		super.onDestroy();
 	}
 }

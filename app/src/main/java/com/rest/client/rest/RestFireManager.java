@@ -10,10 +10,8 @@ import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
-import com.rest.client.rest.events.RestResponseEvent;
 
 import de.greenrobot.event.EventBus;
-import io.realm.RealmObject;
 
 /**
  * Architecture for working with Firebase.
@@ -59,7 +57,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	/**
 	 * Called when do not need manager.
 	 */
-	public void onDestory() {
+	public void onDestroy() {
 		mFirebase.removeEventListener( this );
 	}
 
@@ -127,13 +125,8 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//[ChildEventListener]
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
-		RestObject  serverData = dataSnapshot.getValue( mRespType );
-		RealmObject dbItem     = serverData.updateDB( RestObject.SYNCED );
-		EventBus.getDefault()
-				.postSticky( new RestResponseEvent(
-						mId,
-						dbItem
-				) );
+		RestObject serverData = dataSnapshot.getValue( mRespType );
+		serverData.updateDB( RestObject.SYNCED );
 	}
 
 	@Override

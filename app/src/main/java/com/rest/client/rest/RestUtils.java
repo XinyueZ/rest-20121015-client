@@ -30,7 +30,7 @@ public final class RestUtils {
 
 	public static void executePending( ExecutePending exp ) {
 		Realm db = Realm.getDefaultInstance();
-		RealmResults<? extends RealmObject> notSyncItems = db.where( exp.getPending()
+		RealmResults<? extends RealmObject> notSyncItems = db.where( exp.build()
 																		.DBType() )
 															 .equalTo(
 																	 "status",
@@ -39,7 +39,7 @@ public final class RestUtils {
 															 .findAll();
 		List<RestObject> restObjects = new ArrayList<>();
 		for( RealmObject item : notSyncItems ) {
-			restObjects.add( exp.getPending()
+			restObjects.add( exp.build()
 								.fromDB( item ) );
 		}
 		exp.executePending( restObjects );

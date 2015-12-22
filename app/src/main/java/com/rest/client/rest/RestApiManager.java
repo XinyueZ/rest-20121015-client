@@ -2,10 +2,6 @@ package com.rest.client.rest;
 
 import android.util.Log;
 
-import com.rest.client.rest.events.RestResponseEvent;
-
-import de.greenrobot.event.EventBus;
-import io.realm.RealmObject;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.Response;
@@ -59,12 +55,7 @@ public class RestApiManager {
 				//-------------------------
 				RestObject serverData = response.body();
 				//UPDATE LOCAL STATUS.
-				RealmObject dbItem = serverData.updateDB( RestObject.SYNCED );
-				EventBus.getDefault()
-						.postSticky( new RestResponseEvent(
-								mId,
-								dbItem
-						) );
+				serverData.updateDB( RestObject.SYNCED );
 			}
 
 			@Override
@@ -74,14 +65,6 @@ public class RestApiManager {
 						"onFailure: " + t.toString()
 
 				);
-				//---------------------------------
-				//THE REQUEST IS NOT SUCCESSFULLY.
-				//---------------------------------
-				EventBus.getDefault()
-						.postSticky( new RestResponseEvent(
-								mId,
-								null
-						) );
 			}
 		} );
 	}
