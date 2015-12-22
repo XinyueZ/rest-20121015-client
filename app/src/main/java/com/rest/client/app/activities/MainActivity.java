@@ -22,6 +22,7 @@ import com.rest.client.rest.events.RestResponseEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -57,16 +58,7 @@ public class MainActivity extends AppCompatActivity {
 		if( mSnackbar != null && mSnackbar.isShown() ) {
 			mSnackbar.dismiss();
 		}
-		//Load all data(local).
-		RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
-											  .where( ClientDB.class )
-											  .findAll();
-		dbItems.sort(
-				"reqTime",
-				Sort.DESCENDING
-		);
-		mBinding.getAdapter()
-				.setData( dbItems );
+
 		mBinding.getAdapter()
 				.notifyDataSetChanged();
 	}
@@ -114,7 +106,20 @@ public class MainActivity extends AppCompatActivity {
 
 	private void initList() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mBinding.setAdapter( new ListAdapter<ClientDB>() );
+		//Load all data(local).
+		final RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
+											  .where( ClientDB.class )
+											  .findAllAsync();
+		dbItems.addChangeListener( new RealmChangeListener() {
+			@Override
+			public void onChange() {
+				dbItems.sort(
+						"reqTime",
+						Sort.DESCENDING
+				);
+				mBinding.setAdapter( new ListAdapter<ClientDB>().setData( dbItems ) );
+			}
+		} );
 	}
 
 
@@ -159,10 +164,12 @@ public class MainActivity extends AppCompatActivity {
 
 		App.Instance.getClientRestFireManager()
 					.install(
-							App.Instance,
-							Client.class
+							App.Instance
 					);
-		App.Instance.getClientRestFireManager().selectAll(ClientDB.class);
+		App.Instance.getClientRestFireManager()
+					.selectAll( ClientDB.class,
+								Client.class
+					);
 	}
 
 	@Override

@@ -48,14 +48,17 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	 *
 	 * @param data
 	 * 		Data-source.
+	 *
+	 * @return This object.
 	 */
-	public void setData( List<T> data ) {
+	public ListAdapter<T> setData( List<T> data ) {
 		mVisibleData = data;
 		mCount = mVisibleData.size();
 		mRegistry.notifyChange(
 				this,
 				BR.count
 		);
+		return this;
 	}
 
 
@@ -64,14 +67,17 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	 *
 	 * @param data
 	 * 		Data-source.
+	 *
+	 * @return This object.
 	 */
-	public void addData( T data ) {
+	public ListAdapter<T> addData( T data ) {
 		mVisibleData.add( data );
 		mCount = mVisibleData.size();
 		mRegistry.notifyChange(
 				this,
 				BR.count
 		);
+		return this;
 	}
 
 
@@ -80,14 +86,17 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	 *
 	 * @param data
 	 * 		Data-source.
+	 *
+	 * @return This object.
 	 */
-	public void addData( List<T> data ) {
+	public ListAdapter<T> addData( List<T> data ) {
 		mVisibleData.addAll( data );
 		mCount = mVisibleData.size();
 		mRegistry.notifyChange(
 				this,
 				BR.count
 		);
+		return this;
 	}
 
 	@Override

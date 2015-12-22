@@ -27,6 +27,7 @@ import com.rest.client.rest.events.RestResponseEvent;
 
 import de.greenrobot.event.EventBus;
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -60,17 +61,7 @@ public class MainActivity2 extends AppCompatActivity {
 		if( mSnackbar != null && mSnackbar.isShown() ) {
 			mSnackbar.dismiss();
 		}
-		//Load all data(local).
-		RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
-											  .where( ClientDB.class )
-											  .findAll();
-		dbItems.sort(
-				"reqTime",
-				Sort.DESCENDING
-		);
-		mBinding.getAdapter()
-				.setData( dbItems );
-		if( dbItems.size() < 1 ) {
+		if( mBinding.getAdapter().getItemCount() < 1 ) {
 			//UI update for no-data status.
 			mBinding.loadingPb.setVisibility( View.INVISIBLE );
 			mSnackbar = Snackbar.make(
@@ -155,7 +146,20 @@ public class MainActivity2 extends AppCompatActivity {
 
 	private void initList() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mBinding.setAdapter( new ListAdapter<ClientDB>() );
+		//Load all data(local).
+		final RealmResults<ClientDB> dbItems = Realm.getDefaultInstance()
+													.where( ClientDB.class )
+													.findAllAsync();
+		dbItems.addChangeListener( new RealmChangeListener() {
+			@Override
+			public void onChange() {
+				dbItems.sort(
+						"reqTime",
+						Sort.DESCENDING
+				);
+				mBinding.setAdapter(  new ListAdapter<ClientDB>().setData( dbItems ) );
+			}
+		} );
 	}
 
 

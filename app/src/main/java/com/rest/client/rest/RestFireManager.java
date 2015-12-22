@@ -1,7 +1,5 @@
 package com.rest.client.rest;
 
-import java.lang.reflect.Method;
-
 import android.app.Application;
 
 import com.firebase.client.AuthData;
@@ -10,7 +8,6 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
 import com.rest.client.rest.events.RestResponseEvent;
@@ -20,7 +17,6 @@ import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 import io.realm.RealmObject;
 import io.realm.RealmQuery;
-import io.realm.RealmResults;
 
 /**
  * Architecture for working with Firebase.
@@ -31,7 +27,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
 	private static String URL  = "https://rest-20121015.firebaseio.com";
 	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
-	private Firebase mDatabase;
+	private Firebase mFirebase;
 	/**
 	 * Local storage for storing pending queue and back-off data.
 	 */
@@ -107,11 +103,11 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void init( int id, Application app ) {
 		setId( id );
-		mDB = Realm.getInstance( app );
+		mDB = Realm.getDefaultInstance();
 		Firebase.setAndroidContext( app );
-		mDatabase = new Firebase( URL );
-		mDatabase.keepSynced( true );
-		mDatabase.authWithCustomToken(
+		mFirebase = new Firebase( URL );
+		mFirebase.keepSynced( true );
+		mFirebase.authWithCustomToken(
 				AUTH,
 				this
 		);
@@ -123,18 +119,13 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 *
 	 * @param app
 	 * 		{@link Application} The application domain to control manager.
-	 * @param restObjectClazz
-	 * 		The meta of response object.
 	 */
-	public void install( Application app, Class<? extends RestObject> restObjectClazz  ) {
+	public void install( Application app ) {
 		if( !EventBus.getDefault()
 					 .isRegistered( this ) ) {
 			EventBus.getDefault()
 					.register( this );
 		}
-		mObjectType = restObjectClazz;
-		Firebase connectedRef = new Firebase( URL + "/.info/connected" );
-		connectedRef.addValueEventListener( mDBConnectStatusHandler );
 		mConnected = RestUtils.isNetworkAvailable( app );
 	}
 
@@ -147,7 +138,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 			EventBus.getDefault()
 					.unregister( this );
 		}
-		mDatabase.removeEventListener( this );
+		mFirebase.removeEventListener( this );
 	}
 
 	/**
@@ -169,61 +160,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		mConnected = connected;
 	}
 
-	/**
-	 * The Firebase suggestion of handling connection and disconnection is nice. However in order to give client better feeling of disconnection, the
-	 * rest package Use {@link RestNetworkChangeReceiver} to covert "disconnect" because it is little sensitive. The "connection" works well.
-	 */
-	private ValueEventListener mDBConnectStatusHandler = new ValueEventListener() {
-		@Override
-		public void onDataChange( DataSnapshot snapshot ) {
-			boolean connected = snapshot.getValue( Boolean.class );
-			if( connected && mDBType != null) {
-				RealmResults<? extends RealmObject> notSyncItems = mDB.where( mDBType )
-																	  .equalTo(
-																			  "status",
-																			  RestObject.NOT_SYNCED
-																	  )
-																	  .findAll();
-				if( notSyncItems.size() > 0 ) {
-					mDB.beginTransaction();
-					RealmObject item = notSyncItems.get( 0 );
-					while( item != null ) {
-						Method method;
-						try {
-							method = item.getClass()
-										 .getMethod(
-												 "setStatus",
-												 int.class
-										 );
-							method.invoke(
-									item,
-									RestObject.SYNCED
-							);
-						} catch( Exception e ) {
-							e.printStackTrace();
-						}
-						mDB.copyToRealmOrUpdate( item );
-						EventBus.getDefault()
-								.post( new RestResponseEvent(
-										getId(),
-										item
-								) );
-						if( notSyncItems.size() > 0 ) {
-							item = notSyncItems.get( 0 );
-						} else {
-							break;
-						}
-					}
-					mDB.commitTransaction();
-				}
-			}
-		}
 
-		@Override
-		public void onCancelled( FirebaseError error ) {
-			System.err.println( "Listener was cancelled" );
-		}
-	};
 
 
 	//[AuthResultHandler]
@@ -245,8 +182,8 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 				) );
 	}
 
-	private Class<?  extends RealmObject>   mDBType;
-	private Class<? extends RestObject>  mObjectType;
+	private Class<? extends RealmObject> mDBType;
+	private Class<? extends RestObject>  mRespType;
 
 
 	/**
@@ -256,25 +193,42 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		{@link RestObject} to save on Firebase.
 	 */
 	public void save( RestObject newData ) {
+		mFirebase.addChildEventListener( this );
+		saveInBackground(newData);
+	}
+
+	/**
+	 * Save data on Firebase in background, call this in thread.
+	 *
+	 * @param newData
+	 * 		{@link RestObject} to save on Firebase.
+	 */
+	public void saveInBackground( RestObject newData ) {
+		mRespType = newData.getClass();
 		mDBType = newData.DBType();
 		newData.updateDB( !isConnected() ? RestObject.NOT_SYNCED : RestObject.SYNCED );
 		//SAVE ON SERVER.
-		mDatabase.child( newData.getReqId() )
+		mFirebase.child( newData.getReqId() )
 				 .setValue( newData );
-		mDatabase.push();
+		mFirebase.push();
 	}
 
-
-	public void selectAll(Class<?  extends RealmObject> dbType) {
+	/**
+	 * Get all data from Firebase of type {@code respType}.
+	 * @param dbType The type of objects saved local to represent {@code respType}.
+	 * @param respType Server data type {@code respType}.
+	 */
+	public void selectAll( Class<? extends RealmObject> dbType, Class<? extends RestObject> respType ) {
 		mDBType = dbType;
-		mDatabase.addChildEventListener( this );
+		mRespType = respType;
+		mFirebase.addChildEventListener( this );
 	}
 
 	//[ChildEventListener]
 	@Override
 	public void onChildAdded( DataSnapshot dataSnapshot, String s ) {
-		RestObject serverData = dataSnapshot.getValue( mObjectType );
-		RealmQuery<? extends RealmObject> notInLocal = mDB.where(  mDBType )
+		RestObject serverData = dataSnapshot.getValue( mRespType );
+		RealmQuery<? extends RealmObject> notInLocal = mDB.where( mDBType )
 														  .equalTo(
 																  "reqId",
 																  serverData.getReqId()

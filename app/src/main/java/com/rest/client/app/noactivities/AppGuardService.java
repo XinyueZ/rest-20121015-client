@@ -15,7 +15,6 @@ import com.rest.client.rest.RestFireManager;
 
 public final class AppGuardService extends GcmTaskService {
 	private static final String          TAG                        = "AppGuardService";
-	private              RestFireManager  mBackgroundRestFireManager ;
 
 	public AppGuardService() {
 		super();
@@ -41,8 +40,8 @@ public final class AppGuardService extends GcmTaskService {
 				TAG,
 				"onRunTask: Call by API."
 		);
-		mBackgroundRestFireManager = new RestFireManager();
-		mBackgroundRestFireManager.init(
+		RestFireManager mgr = new RestFireManager();
+		mgr.init(
 				3,
 				getApplication()
 		);
@@ -50,8 +49,8 @@ public final class AppGuardService extends GcmTaskService {
 		client.setReqId(  UUID.randomUUID()
 							  .toString() );
 		client.setReqTime( System.currentTimeMillis() );
-		client.setComment( Build.MODEL + "---" + random() );
-		mBackgroundRestFireManager.save( client );
+		client.setComment( Build.MODEL + "--Bk---" + random() );
+		mgr.saveInBackground( client );
 		return GcmNetworkManager.RESULT_SUCCESS;
 	}
 
