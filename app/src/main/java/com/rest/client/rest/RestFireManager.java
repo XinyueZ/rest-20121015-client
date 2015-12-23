@@ -1,6 +1,7 @@
 package com.rest.client.rest;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
@@ -135,10 +136,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void selectAll( Class<? extends RestObject> respType ) {
 		mRespType = respType;
-		if( !mAddedListener ) {
-			mFirebase.addChildEventListener( this );
-			mAddedListener = true;
+		if( mAddedListener ) {
+			mFirebase.removeEventListener( this );
+			mAddedListener = false;
 		}
+		mFirebase.addChildEventListener( this );
+		mAddedListener = true;
 	}
 
 	/**
@@ -160,23 +163,33 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 
 	@Override
 	public void onChildChanged( DataSnapshot dataSnapshot, String s ) {
-
+		Log.d(
+				getClass().getSimpleName(),
+				"onChildChanged: " + dataSnapshot.getValue()
+		);
 	}
 
 	@Override
 	public void onChildRemoved( DataSnapshot dataSnapshot ) {
-
+		Log.d(
+				getClass().getSimpleName(),
+				"onChildRemoved: " + dataSnapshot.getValue()
+		);
 	}
 
 	@Override
 	public void onChildMoved( DataSnapshot dataSnapshot, String s ) {
-
+		Log.d(
+				getClass().getSimpleName(),
+				"onChildMoved: " + dataSnapshot.getValue()
+		);
 	}
 
 	@Override
 	public void onCancelled( FirebaseError firebaseError ) {
-
+		Log.d(
+				getClass().getSimpleName(),
+				"onCancelled: " + firebaseError.toString()
+		);
 	}
-
-
 }
