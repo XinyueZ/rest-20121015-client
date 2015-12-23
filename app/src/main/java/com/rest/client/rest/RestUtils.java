@@ -39,7 +39,9 @@ public final class RestUtils {
 
 	/**
 	 * Delete all pending objects that might not be synced.
-	 * @param clazz  The meta of object.
+	 *
+	 * @param clazz
+	 * 		The meta of object.
 	 */
 	public static void clearPending( Class<? extends RealmObject> clazz ) {
 		Realm db = Realm.getDefaultInstance();
@@ -48,6 +50,26 @@ public final class RestUtils {
 																"status",
 																RestObject.NOT_SYNCED
 														)
+														.findAll();
+		db.beginTransaction();
+		results.clear();
+		db.commitTransaction();
+
+		if( !db.isClosed() ) {
+			db.close();
+		}
+	}
+
+
+	/**
+	 * Delete all objects .
+	 *
+	 * @param clazz
+	 * 		The meta of object.
+	 */
+	public static void clear( Class<? extends RealmObject> clazz ) {
+		Realm db = Realm.getDefaultInstance();
+		RealmResults<? extends RealmObject> results = db.where( clazz )
 														.findAll();
 		db.beginTransaction();
 		results.clear();
