@@ -292,7 +292,7 @@ public class MainActivity2 extends AppCompatActivity {
 		if( mDBData != null && mListListener != null ) {
 			mDBData.removeChangeListener( mListListener );
 		}
-		if(mRealm!=null && !mRealm.isClosed()) {
+		if( mRealm != null && !mRealm.isClosed() ) {
 			mRealm.close();
 		}
 		super.onDestroy();

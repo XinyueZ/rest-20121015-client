@@ -27,7 +27,9 @@ import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.ExecutePending;
 import com.rest.client.rest.RestObject;
+import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
+import de.greenrobot.event.EventBus;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -48,7 +50,23 @@ public class MainActivity extends AppCompatActivity {
 	 * Message holder.
 	 */
 	private Snackbar mSnackbar;
+	//------------------------------------------------
+	//Subscribes, event-handlers
+	//------------------------------------------------
 
+	/**
+	 * Handler for {@link UpdateNetworkStatusEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link UpdateNetworkStatusEvent}.
+	 */
+	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
+		if( e.isConnected() ) {
+			sendPending();
+		}
+	}
+
+	//------------------------------------------------
 
 	/**
 	 * Show single instance of {@link MainActivity}
@@ -238,6 +256,20 @@ public class MainActivity extends AppCompatActivity {
 
 	}
 
+	@Override
+	protected void onResume() {
+		super.onResume();
+		EventBus.getDefault()
+				.registerSticky( this );
+
+	}
+
+	@Override
+	protected void onPause() {
+		EventBus.getDefault()
+				.unregister( this );
+		super.onPause();
+	}
 
 	@Override
 	protected void onDestroy() {

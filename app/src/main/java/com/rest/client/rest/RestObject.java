@@ -29,7 +29,9 @@ public abstract class RestObject {
 			db.copyToRealmOrUpdate( instance );
 		}
 		db.commitTransaction();
-		db.close();
+		if( !db.isClosed() ) {
+			db.close();
+		}
 	}
 
 	//Create database items that will be updated into database.

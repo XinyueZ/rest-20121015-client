@@ -42,7 +42,9 @@ public final class RestUtils {
 			restObjects.add( exp.build()
 								.fromDB( item ) );
 		}
-		db.close();
+		if( !db.isClosed() ) {
+			db.close();
+		}
 		exp.executePending( restObjects );
 	}
 }

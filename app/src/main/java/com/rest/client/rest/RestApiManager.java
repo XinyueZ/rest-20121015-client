@@ -24,7 +24,7 @@ public class RestApiManager {
 	 * Initialize the manager.
 	 */
 
-	public void onCreated( ) {
+	public void onCreated() {
 		setId( java.lang.System.currentTimeMillis() );
 	}
 
