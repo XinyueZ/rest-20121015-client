@@ -20,16 +20,31 @@ import de.greenrobot.event.EventBus;
  */
 public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	//Firebase.
-	private static String URL  = "https://rest-20121015.firebaseio.com";
-	private static String AUTH = "IJ0kevPaQaMof0DxBXkwM54DdJ36cWK8wbedkoMe";
+	private String                      mUrl;
+	private String                      mAuth;
 	private Firebase                    mFirebase;
 	private Class<? extends RestObject> mRespType;
 	/**
 	 * The id of manger.
 	 */
 	private long                        mId;
+	/**
+	 * A flag to indicate whether listener of Firebase has been assigned or not.
+	 */
+	private boolean                     mAddedListener;
 
-	private boolean mAddedListener;
+	/**
+	 * Constructor of {@link RestFireManager}
+	 *
+	 * @param url
+	 * 		The base-url to used Firebase.
+	 * @param auth
+	 * 		The auth-info to used Firebase.
+	 */
+	public RestFireManager( String url, String auth ) {
+		mUrl = url;
+		mAuth = auth;
+	}
 
 	/**
 	 * Initialize the manager.
@@ -40,10 +55,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	public void onCreate( Application app ) {
 		setId( System.currentTimeMillis() );
 		Firebase.setAndroidContext( app );
-		mFirebase = new Firebase( URL );
+		mFirebase = new Firebase( mUrl );
 		mFirebase.keepSynced( true );
 		mFirebase.authWithCustomToken(
-				AUTH,
+				mAuth,
 				this
 		);
 	}
@@ -126,6 +141,12 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		}
 	}
 
+	/**
+	 * Do pending request.
+	 *
+	 * @param exp
+	 * 		{@link Application} context.
+	 */
 	public void executePending( ExecutePending exp ) {
 		RestUtils.executePending( exp );
 	}

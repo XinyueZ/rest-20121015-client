@@ -1,19 +1,25 @@
 package com.rest.client.rest;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.Nullable;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
 
-
+/**
+ * Utils class for Rest-package.
+ */
 public final class RestUtils {
 
 	/**
@@ -30,6 +36,12 @@ public final class RestUtils {
 		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 	}
 
+	/**
+	 * Help method to execute pending requests.
+	 *
+	 * @param exp
+	 * 		{@link ExecutePending} to execute pending.
+	 */
 	public static void executePending( ExecutePending exp ) {
 		Realm db = Realm.getDefaultInstance();
 		RealmResults<? extends RealmObject> notSyncItems = db.where( exp.build()
@@ -50,8 +62,47 @@ public final class RestUtils {
 		exp.executePending( restObjects );
 	}
 
-	public static void initDB( Application app ) {
+	/**
+	 * Initialize Rest-package.
+	 *
+	 * @param app
+	 * 		The {@link Application} context.
+	 * @param useFirebase
+	 * 		{@code true} if this application use Firebase.
+	 *
+	 * @return An array of strings, first element is the base url to Firebase, second is auth code to it.
+	 */
+	public static
+	@Nullable
+	String[] initRest( Application app, boolean useFirebase ) {
 		RealmConfiguration config = new RealmConfiguration.Builder( app ).build();
 		Realm.setDefaultConfiguration( config );
+		if( useFirebase ) {
+			Properties  prop  = new Properties();
+			InputStream input = null;
+			try {
+			/*From "resources".*/
+				input = app.getClassLoader()
+						   .getResourceAsStream( "firebase.properties" );
+				if( input != null ) {
+					// load a properties file
+					prop.load( input );
+					String url  = prop.getProperty( "firebase_url" );
+					String auth = prop.getProperty( "firebase_auth" );
+					return new String[] { url , auth };
+				}
+			} catch( IOException ex ) {
+				ex.printStackTrace();
+			} finally {
+				if( input != null ) {
+					try {
+						input.close();
+					} catch( IOException e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return null;
 	}
 }

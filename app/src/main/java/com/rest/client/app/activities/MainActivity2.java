@@ -132,6 +132,7 @@ public class MainActivity2 extends AppCompatActivity {
 
 
 	private void initListView() {
+		mBinding.loadingPb.setVisibility( View.VISIBLE );
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
 		Calendar yesterday = Calendar.getInstance();

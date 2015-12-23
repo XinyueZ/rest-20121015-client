@@ -4,6 +4,8 @@ package com.rest.client.app.noactivities;
 import java.util.Random;
 import java.util.UUID;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -40,7 +42,12 @@ public final class AppGuardService extends GcmTaskService {
 				TAG,
 				"onRunTask: Call by API."
 		);
-		RestFireManager mgr = new RestFireManager();
+		SharedPreferences firebaseRef = getSharedPreferences(
+				"firebase",
+				Context.MODE_PRIVATE
+		);
+		RestFireManager mgr = new RestFireManager(firebaseRef.getString( "firebase_url", null ),
+												  firebaseRef.getString( "firebase_auth", null ));
 		mgr.onCreate( getApplication() );
 		Client client = new Client();
 		client.setReqId( UUID.randomUUID()

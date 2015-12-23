@@ -35,6 +35,7 @@
 package com.rest.client.app;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.multidex.MultiDexApplication;
 
 import com.google.android.gms.gcm.GcmNetworkManager;
@@ -60,13 +61,38 @@ public final class App extends MultiDexApplication {
 		Instance = this;
 	}
 
-	private RestFireManager mFireManager = new RestFireManager();
-	private RestApiManager  mApiManager  = new RestApiManager();
+	private RestFireManager mFireManager;
+	private RestApiManager  mApiManager;
+
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		RestUtils.initDB(this);
+		String[] fireInfo = RestUtils.initRest(
+				this,
+				true
+		);
+		if( fireInfo != null ) {
+			SharedPreferences firebaseRef = getSharedPreferences(
+					"firebase",
+					Context.MODE_PRIVATE
+			);
+			SharedPreferences.Editor editor = firebaseRef.edit();
+			editor.putString(
+					"firebase_url",
+					fireInfo[ 0 ]
+			);
+			editor.putString(
+					"firebase_auth",
+					fireInfo[ 1 ]
+			);
+			editor.commit();
+			mFireManager = new RestFireManager(
+					fireInfo[ 0 ],
+					fireInfo[ 1 ]
+			);
+		}
+		mApiManager = new RestApiManager();
 		mFireManager.onCreate( this );
 		mApiManager.onCreated();
 		startAppGuardService( this );
@@ -83,9 +109,9 @@ public final class App extends MultiDexApplication {
 
 	public static void startAppGuardService( Context cxt ) {
 		//long scheduleSec = 60 * 2;
-				long   scheduleSec = 10800L;
-		long   flexSecs = 60L;
-		String tag      = System.currentTimeMillis() + "";
+		long scheduleSec = 10800L;
+		long flexSecs    = 60L;
+		String tag       = System.currentTimeMillis() + "";
 		PeriodicTask scheduleTask = new PeriodicTask.Builder().setService( AppGuardService.class )
 															  .setPeriod( scheduleSec )
 															  .setFlex( flexSecs )
@@ -97,5 +123,6 @@ public final class App extends MultiDexApplication {
 		GcmNetworkManager.getInstance( cxt )
 						 .schedule( scheduleTask );
 	}
+
 
 }
