@@ -6,12 +6,12 @@ import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.RealmClass;
 
 @RealmClass
-public   class ClientDB extends RealmObject {
+public class ClientDB extends RealmObject {
 	@PrimaryKey
 	private String reqId;
 	private long   reqTime;
 	private String comment;
-	private int status;
+	private int    status;
 
 	public String getReqId() {
 		return reqId;

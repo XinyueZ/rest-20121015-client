@@ -17,34 +17,29 @@ public class RequestForResponse extends RestObject {
 	@JsonProperty("reqTime")
 	private long   mReqTime;
 
-	public void setReqId( String reqId ) {
-		mReqId = reqId;
-	}
-
-	public void setReqTime( long reqTime ) {
-		mReqTime = reqTime;
-	}
-
 	public String getReqId() {
 		return mReqId;
+	}
+
+	public void setReqId( String reqId ) {
+		mReqId = reqId;
 	}
 
 	public long getReqTime() {
 		return mReqTime;
 	}
 
+	public void setReqTime( long reqTime ) {
+		mReqTime = reqTime;
+	}
 
 	@Override
-	public RealmObject updateDB(int status) {
-		Realm db = Realm.getDefaultInstance();
-		db.beginTransaction();
+	public RealmObject[] newInstances( Realm db, int status  ) {
 		RequestForResponseDB dbItem = new RequestForResponseDB();
 		dbItem.setReqId( getReqId() );
 		dbItem.setReqTime( getReqTime() );
-		dbItem.setStatus(status);
-		db.copyToRealmOrUpdate( dbItem );
-		db.commitTransaction();
-		return dbItem;
+		dbItem.setStatus( status );
+		return new RealmObject[] { dbItem };
 	}
 
 	@Override

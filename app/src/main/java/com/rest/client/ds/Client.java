@@ -20,43 +20,38 @@ public class Client extends RestObject {
 	@JsonProperty("comment")
 	private String mComment;
 
-	public void setReqId( String reqId ) {
-		mReqId = reqId;
-	}
-
-	public void setReqTime( long reqTime ) {
-		mReqTime = reqTime;
-	}
-
-	public void setComment( String comment ) {
-		mComment = comment;
-	}
-
 	public String getReqId() {
 		return mReqId;
+	}
+
+	public void setReqId( String reqId ) {
+		mReqId = reqId;
 	}
 
 	public long getReqTime() {
 		return mReqTime;
 	}
 
+	public void setReqTime( long reqTime ) {
+		mReqTime = reqTime;
+	}
+
 	public String getComment() {
 		return mComment;
 	}
 
+	public void setComment( String comment ) {
+		mComment = comment;
+	}
 
 	@Override
-	public RealmObject updateDB( int status ) {
-		Realm db = Realm.getDefaultInstance();
-		db.beginTransaction();
+	public RealmObject[] newInstances( Realm db, int status ) {
 		ClientDB dbItem = new ClientDB();
 		dbItem.setReqId( getReqId() );
 		dbItem.setReqTime( getReqTime() );
 		dbItem.setComment( getComment() );
 		dbItem.setStatus( status );
-		db.copyToRealmOrUpdate( dbItem );
-		db.commitTransaction();
-		return dbItem;
+		return new RealmObject[] { dbItem };
 	}
 
 	@Override
@@ -67,7 +62,7 @@ public class Client extends RestObject {
 	@Override
 	public RestObject fromDB( RealmObject dbItem ) {
 		ClientDB clientDB = (ClientDB) dbItem;
-		Client client = new Client();
+		Client   client   = new Client();
 		client.setReqId( clientDB.getReqId() );
 		client.setReqTime( clientDB.getReqTime() );
 		client.setComment( clientDB.getComment() );

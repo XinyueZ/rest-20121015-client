@@ -42,40 +42,38 @@ public final class Response extends RestObject {
 		return 0;
 	}
 
-	@Override
-	public RealmObject updateDB( int status ) {
-		Realm db = Realm.getDefaultInstance();
 
+	@Override
+	public Class<? extends RealmObject> DBType() {
+		return ResponseDB.class;
+	}
+
+	@Override
+	public RealmObject[] newInstances( Realm db, int status ) {
 		RealmList<ClientDB> dbRealmList = new RealmList<>();
 		List<Client>        clientList  = getResult();
 		for( Client client : clientList ) {
-			dbRealmList.add( (ClientDB) client.updateDB( status ) );
+			RealmObject[] objects = client.newInstances(
+					db,
+					status
+			);
+			dbRealmList.add( (ClientDB) objects[ 0 ] );
 		}
 
-		db.beginTransaction();
 		ResponseDB dbItem = new ResponseDB();
 		dbItem.setReqId( getReqId() );
 		dbItem.setResponseStatus( getStatus() );
 		dbItem.setStatus( status );
 		dbItem.setResult( dbRealmList );
-		db.copyToRealmOrUpdate( dbItem );
-		db.commitTransaction();
 
 		RealmResults<RequestForResponseDB> reqItemDbs = db.where( RequestForResponseDB.class )
 														  .equalTo(
 																  "reqId",
 																  getReqId()
 														  )
-														  .findAllAsync();
+														  .findAll();
 		RequestForResponseDB reqItemDb = reqItemDbs.first();
-		db.beginTransaction();
 		reqItemDb.setStatus( status );
-		db.commitTransaction();
-		return dbItem;
-	}
-
-	@Override
-	public Class<? extends RealmObject> DBType() {
-		return ResponseDB.class;
+		return new RealmObject[] { dbItem , reqItemDb };
 	}
 }

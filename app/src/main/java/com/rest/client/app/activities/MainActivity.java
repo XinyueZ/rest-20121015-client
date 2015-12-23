@@ -35,7 +35,7 @@ import io.realm.Sort;
 
 
 public class MainActivity extends AppCompatActivity {
-
+	private Realm       mRealm;
 	/**
 	 * Data-binding.
 	 */
@@ -126,9 +126,8 @@ public class MainActivity extends AppCompatActivity {
 	private void initListView() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
-		mDBData = Realm.getDefaultInstance()
-					   .where( ClientDB.class )
-					   .findAllAsync();
+		mDBData = mRealm.where( ClientDB.class )
+						.findAllAsync();
 		mDBData.addChangeListener( mListListener );
 	}
 
@@ -219,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
+		mRealm = Realm.getDefaultInstance();
 		initComponents();
 		initListView();
 		initFAB();
@@ -241,11 +241,14 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		App.Instance.getFireManager()
+					.onDestroy();
 		if( mDBData != null && mListListener != null ) {
 			mDBData.removeChangeListener( mListListener );
 		}
-		App.Instance.getFireManager()
-					.onDestroy();
+		if( mRealm != null && !mRealm.isClosed() ) {
+			mRealm.close();
+		}
 		super.onDestroy();
 	}
 }

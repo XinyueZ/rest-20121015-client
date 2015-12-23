@@ -16,7 +16,7 @@ public class ClientAddedResponse extends RestObject {
 	private String mReqId;
 	@SerializedName("status")
 	@JsonProperty("status")
-	private int mStatus;
+	private int    mStatus;
 
 	@Override
 	public String getReqId() {
@@ -37,17 +37,16 @@ public class ClientAddedResponse extends RestObject {
 	}
 
 	@Override
-	public RealmObject updateDB(int status) {
-		Realm db = Realm.getDefaultInstance();
-		RealmResults<ClientDB> dbItems = Realm.getDefaultInstance( )
-											  .where( ClientDB.class )
-											  .equalTo( "reqId", getReqId() )
-											  .findAll();
+	public RealmObject[] newInstances( Realm db, int status ) {
+		RealmResults<ClientDB> dbItems = db.where( ClientDB.class )
+										   .equalTo(
+												   "reqId",
+												   getReqId()
+										   )
+										   .findAll();
 		ClientDB clientDB = dbItems.first();
-		db.beginTransaction();
 		clientDB.setStatus( status );
-		db.commitTransaction();
-		return clientDB;
+		return new RealmObject[] { clientDB };
 	}
 
 	@Override
