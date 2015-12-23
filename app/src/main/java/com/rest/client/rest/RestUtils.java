@@ -3,11 +3,13 @@ package com.rest.client.rest;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
 
@@ -46,5 +48,10 @@ public final class RestUtils {
 			db.close();
 		}
 		exp.executePending( restObjects );
+	}
+
+	public static void initDB( Application app ) {
+		RealmConfiguration config = new RealmConfiguration.Builder( app ).build();
+		Realm.setDefaultConfiguration( config );
 	}
 }

@@ -42,9 +42,7 @@ import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.rest.RestApiManager;
 import com.rest.client.rest.RestFireManager;
-
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
+import com.rest.client.rest.RestUtils;
 
 
 /**
@@ -68,11 +66,10 @@ public final class App extends MultiDexApplication {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		RealmConfiguration config = new RealmConfiguration.Builder( this ).build();
-		Realm.setDefaultConfiguration( config );
-		startAppGuardService( this );
+		RestUtils.initDB(this);
 		mFireManager.onCreate( this );
 		mApiManager.onCreated();
+		startAppGuardService( this );
 	}
 
 	public RestFireManager getFireManager() {
