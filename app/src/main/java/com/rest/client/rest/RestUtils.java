@@ -16,6 +16,7 @@ import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
+import io.realm.Sort;
 
 /**
  * Utils class for Rest-package.
@@ -30,7 +31,7 @@ public final class RestUtils {
 	 *
 	 * @return {@code true} if network is o.k.
 	 */
-	static boolean isNetworkAvailable( Context cxt ) {
+	public static boolean isNetworkAvailable( Context cxt ) {
 		ConnectivityManager connectivityManager = (ConnectivityManager) cxt.getSystemService( Context.CONNECTIVITY_SERVICE );
 		NetworkInfo         activeNetworkInfo   = connectivityManager.getActiveNetworkInfo();
 		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
@@ -50,7 +51,10 @@ public final class RestUtils {
 																	 "status",
 																	 RestObject.NOT_SYNCED
 															 )
-															 .findAll();
+															 .findAllSorted(
+																	 "reqTime",
+																	 Sort.ASCENDING
+															 );
 		List<RestObject> restObjects = new ArrayList<>();
 		for( RealmObject item : notSyncItems ) {
 			restObjects.add( exp.build()

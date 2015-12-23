@@ -27,6 +27,7 @@ import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.ExecutePending;
 import com.rest.client.rest.RestObject;
+import com.rest.client.rest.RestUtils;
 import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import de.greenrobot.event.EventBus;
@@ -37,7 +38,7 @@ import io.realm.Sort;
 
 
 public class MainActivity extends AppCompatActivity {
-	private Realm mRealm;
+	private Realm       mRealm;
 	/**
 	 * Data-binding.
 	 */
@@ -94,6 +95,12 @@ public class MainActivity extends AppCompatActivity {
 				LAYOUT
 		);
 		setSupportActionBar( mBinding.toolbar );
+
+		mSnackbar = Snackbar.make(
+				mBinding.rootView,
+				"Getting client list...",
+				Snackbar.LENGTH_INDEFINITE
+		);
 	}
 
 
@@ -128,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 
-
 	private void initListView() {
 		mBinding.loadingPb.setVisibility( View.VISIBLE );
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
@@ -159,6 +165,10 @@ public class MainActivity extends AppCompatActivity {
 								"reqTime",
 								Sort.DESCENDING
 						);
+		if( !RestUtils.isNetworkAvailable( getApplication() ) ) {
+			mDBData.load();
+			buildListView();
+		}
 		mDBData.addChangeListener( mListListener );
 	}
 
@@ -166,24 +176,28 @@ public class MainActivity extends AppCompatActivity {
 	private RealmChangeListener mListListener = new RealmChangeListener() {
 		@Override
 		public void onChange() {
-			mBinding.contentSrl.setRefreshing( false );
-			if( mDBData.isLoaded() ) {
-				if( mBinding.getAdapter() == null ) {
-					mBinding.setAdapter( new ListAdapter<ClientDB>() );
-				}
-				if( mBinding.getAdapter()
-							.getData() == null ) {
-					mBinding.getAdapter()
-							.setData( mDBData );
-				}
-				mBinding.getAdapter()
-						.notifyDataSetChanged();
-				if( mSnackbar != null && mSnackbar.isShown() ) {
-					mSnackbar.dismiss();
-				}
-			}
+			buildListView();
 		}
 	};
+
+	private void buildListView() {
+		mBinding.contentSrl.setRefreshing( false );
+		if( mDBData.isLoaded() ) {
+			if( mBinding.getAdapter() == null ) {
+				mBinding.setAdapter( new ListAdapter<ClientDB>() );
+			}
+			if( mBinding.getAdapter()
+						.getData() == null ) {
+				mBinding.getAdapter()
+						.setData( mDBData );
+			}
+			mBinding.getAdapter()
+					.notifyDataSetChanged();
+			if( mSnackbar != null && mSnackbar.isShown() ) {
+				mSnackbar.dismiss();
+			}
+		}
+	}
 
 
 	@Override
@@ -215,12 +229,6 @@ public class MainActivity extends AppCompatActivity {
 	private void load() {
 		loadList();
 		sendPending();
-		mSnackbar = Snackbar.make(
-				mBinding.rootView,
-				"Getting client list...",
-				Snackbar.LENGTH_INDEFINITE
-		);
-		mSnackbar.show();
 	}
 
 	private void loadList() {
