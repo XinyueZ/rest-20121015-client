@@ -88,12 +88,14 @@ public class RestApiManager {
 		try {
 			//CALL API.
 			Response<SD> response = call.execute();
-			//-------------------------
-			//THE REQUEST IS SUCCESS.
-			//-------------------------
-			RestObject serverData = response.body();
-			//UPDATE LOCAL STATUS.
-			serverData.updateDB( RestObject.SYNCED );
+			if( response.isSuccess() ) {
+				//-------------------------
+				//THE REQUEST IS SUCCESS.
+				//-------------------------
+				RestObject serverData = response.body();
+				//UPDATE LOCAL STATUS.
+				serverData.updateDB( RestObject.SYNCED );
+			}
 		} catch( IOException e ) {
 			Log.e(
 					"RestApiManager",
