@@ -1,5 +1,7 @@
 package com.rest.client.rest;
 
+import java.io.IOException;
+
 import android.util.Log;
 
 import retrofit.Call;
@@ -24,7 +26,7 @@ public class RestApiManager {
 	 * Initialize the manager.
 	 */
 
-	public void onCreated() {
+	public void onCreate() {
 		setId( java.lang.System.currentTimeMillis() );
 	}
 
@@ -36,26 +38,28 @@ public class RestApiManager {
 	}
 
 	/**
-	 * Run a rest request.
+	 * Run a rest request async.
 	 *
 	 * @param call
 	 * 		The {@link Call} to the request.
 	 * @param requestObject
 	 * 		The request data to post on server.
 	 */
-	public <LD extends RestObject, SD extends RestObject> void exec( Call<SD> call, LD requestObject ) {
+	public <LD extends RestObject, SD extends RestObject> void execAsync( Call<SD> call, LD requestObject ) {
 		//MAKE A LOCAL STATUS.
 		requestObject.updateDB( RestObject.NOT_SYNCED );
 		//CALL API.
 		call.enqueue( new Callback<SD>() {
 			@Override
 			public void onResponse( Response<SD> response, Retrofit retrofit ) {
-				//-------------------------
-				//THE REQUEST IS SUCCESS.
-				//-------------------------
-				RestObject serverData = response.body();
-				//UPDATE LOCAL STATUS.
-				serverData.updateDB( RestObject.SYNCED );
+				if( response.isSuccess() ) {
+					//-------------------------
+					//THE REQUEST IS SUCCESS.
+					//-------------------------
+					RestObject serverData = response.body();
+					//UPDATE LOCAL STATUS.
+					serverData.updateDB( RestObject.SYNCED );
+				}
 			}
 
 			@Override
@@ -67,6 +71,36 @@ public class RestApiManager {
 				);
 			}
 		} );
+	}
+
+
+	/**
+	 * Run a rest request sync.
+	 *
+	 * @param call
+	 * 		The {@link Call} to the request.
+	 * @param requestObject
+	 * 		The request data to post on server.
+	 */
+	public <LD extends RestObject, SD extends RestObject> void execSync( Call<SD> call, LD requestObject ) {
+		//MAKE A LOCAL STATUS.
+		requestObject.updateDB( RestObject.NOT_SYNCED );
+		try {
+			//CALL API.
+			Response<SD> response = call.execute();
+			//-------------------------
+			//THE REQUEST IS SUCCESS.
+			//-------------------------
+			RestObject serverData = response.body();
+			//UPDATE LOCAL STATUS.
+			serverData.updateDB( RestObject.SYNCED );
+		} catch( IOException e ) {
+			Log.e(
+					"RestApiManager",
+					"execSync: " + e.getMessage()
+
+			);
+		}
 	}
 
 	public void executePending( ExecutePending exp ) {

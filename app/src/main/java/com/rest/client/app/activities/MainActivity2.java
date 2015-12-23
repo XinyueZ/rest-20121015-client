@@ -215,7 +215,7 @@ public class MainActivity2 extends AppCompatActivity {
 							for( RestObject object : pendingItems ) {
 								Client client = (Client) object;
 								App.Instance.getApiManager()
-											.exec(
+											.execAsync(
 													Api.Retrofit.create( Api.class )
 																.addClient( client ),
 													client
@@ -236,7 +236,7 @@ public class MainActivity2 extends AppCompatActivity {
 						  .toString() );
 		rfr.setReqTime( System.currentTimeMillis() );
 		App.Instance.getApiManager()
-					.exec(
+					.execAsync(
 							Api.Retrofit.create( Api.class )
 										.getList( rfr ),
 							rfr

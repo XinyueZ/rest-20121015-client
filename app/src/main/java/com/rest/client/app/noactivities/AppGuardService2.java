@@ -4,21 +4,20 @@ package com.rest.client.app.noactivities;
 import java.util.Random;
 import java.util.UUID;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
+import com.rest.client.api.Api;
 import com.rest.client.ds.Client;
-import com.rest.client.rest.RestFireManager;
+import com.rest.client.rest.RestApiManager;
 
-public final class AppGuardService extends GcmTaskService {
-	private static final String TAG = "AppGuardService";
+public final class AppGuardService2 extends GcmTaskService {
+	private static final String TAG = "AppGuardService2";
 
-	public AppGuardService() {
+	public AppGuardService2() {
 		super();
 		Log.i(
 				TAG,
@@ -42,19 +41,18 @@ public final class AppGuardService extends GcmTaskService {
 				TAG,
 				"onRunTask: Call by API."
 		);
-		SharedPreferences firebaseRef = getSharedPreferences(
-				"firebase",
-				Context.MODE_PRIVATE
-		);
-		RestFireManager mgr = new RestFireManager(firebaseRef.getString( "firebase_url", null ),
-												  firebaseRef.getString( "firebase_auth", null ));
-		mgr.onCreate( getApplication() );
+		RestApiManager mgr = new RestApiManager();
+		mgr.onCreate();
 		Client client = new Client();
 		client.setReqId( UUID.randomUUID()
 							 .toString() );
 		client.setReqTime( System.currentTimeMillis() );
-		client.setComment( Build.MODEL + "--Bk--Firebase---" + random() );
-		mgr.saveInBackground( client );
+		client.setComment( Build.MODEL + "--Bk--API---" + random() );
+		mgr.execSync(
+				Api.Retrofit.create( Api.class )
+							.addClient( client ),
+				client
+		);
 		return GcmNetworkManager.RESULT_SUCCESS;
 	}
 

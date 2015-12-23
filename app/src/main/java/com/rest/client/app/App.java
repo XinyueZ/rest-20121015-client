@@ -41,6 +41,7 @@ import android.support.multidex.MultiDexApplication;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
+import com.rest.client.app.noactivities.AppGuardService2;
 import com.rest.client.rest.RestApiManager;
 import com.rest.client.rest.RestFireManager;
 import com.rest.client.rest.RestUtils;
@@ -94,7 +95,7 @@ public final class App extends MultiDexApplication {
 		}
 		mApiManager = new RestApiManager();
 		mFireManager.onCreate( this );
-		mApiManager.onCreated();
+		mApiManager.onCreate();
 		startAppGuardService( this );
 	}
 
@@ -108,8 +109,8 @@ public final class App extends MultiDexApplication {
 
 
 	public static void startAppGuardService( Context cxt ) {
-		//long scheduleSec = 60 * 2;
-		long scheduleSec = 10800L;
+		long scheduleSec = 60 * 2;
+		//long scheduleSec = 10800L;
 		long flexSecs    = 60L;
 		String tag       = System.currentTimeMillis() + "";
 		PeriodicTask scheduleTask = new PeriodicTask.Builder().setService( AppGuardService.class )
@@ -120,6 +121,18 @@ public final class App extends MultiDexApplication {
 															  .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
 															  .setRequiresCharging( false )
 															  .build();
+		GcmNetworkManager.getInstance( cxt )
+						 .schedule( scheduleTask );
+
+		tag       = ( System.currentTimeMillis() + 1 ) + "";
+		scheduleTask = new PeriodicTask.Builder().setService( AppGuardService2.class )
+												 .setPeriod( scheduleSec )
+												 .setFlex( flexSecs )
+												 .setTag( tag )
+												 .setPersisted( true )
+												 .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
+												 .setRequiresCharging( false )
+												 .build();
 		GcmNetworkManager.getInstance( cxt )
 						 .schedule( scheduleTask );
 	}
