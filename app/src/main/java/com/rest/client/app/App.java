@@ -109,8 +109,8 @@ public final class App extends MultiDexApplication {
 
 
 	public static void startAppGuardService( Context cxt ) {
-		long scheduleSec = 60 * 2;
-		//long scheduleSec = 10800L;
+//		long scheduleSec = 60 * 2;
+		long scheduleSec = 10800L;
 		long flexSecs    = 60L;
 		String tag       = System.currentTimeMillis() + "";
 		PeriodicTask scheduleTask = new PeriodicTask.Builder().setService( AppGuardService.class )

@@ -7,4 +7,9 @@
         android:orderInCategory="100"
         android:title="Firebase version demo"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clear_pending"
+        android:orderInCategory="100"
+        android:title="Clear pending"
+        app:showAsAction="never" />
 </menu>

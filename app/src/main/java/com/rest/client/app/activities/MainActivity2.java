@@ -261,9 +261,13 @@ public class MainActivity2 extends AppCompatActivity {
 		int id = item.getItemId();
 
 		//noinspection SimplifiableIfStatement
-		if( id == R.id.action_api_example ) {
-			MainActivity.showInstance( this );
-			return true;
+		switch( id ) {
+			case R.id.action_api_example:
+				MainActivity.showInstance( this );
+				return true;
+			case R.id.action_clear_pending:
+				RestUtils.clearPending( ClientDB.class );
+				return true;
 		}
 
 		return super.onOptionsItemSelected( item );

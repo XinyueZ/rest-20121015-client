@@ -38,6 +38,27 @@ public final class RestUtils {
 	}
 
 	/**
+	 * Delete all pending objects that might not be synced.
+	 * @param clazz  The meta of object.
+	 */
+	public static void clearPending( Class<? extends RealmObject> clazz ) {
+		Realm db = Realm.getDefaultInstance();
+		RealmResults<? extends RealmObject> results = db.where( clazz )
+														.equalTo(
+																"status",
+																RestObject.NOT_SYNCED
+														)
+														.findAll();
+		db.beginTransaction();
+		results.clear();
+		db.commitTransaction();
+
+		if( !db.isClosed() ) {
+			db.close();
+		}
+	}
+
+	/**
 	 * Help method to execute pending requests.
 	 *
 	 * @param exp
