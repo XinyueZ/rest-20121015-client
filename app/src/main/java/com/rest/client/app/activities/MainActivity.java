@@ -1,5 +1,6 @@
 package com.rest.client.app.activities;
 
+import java.util.Calendar;
 import java.util.List;
 
 import android.app.Activity;
@@ -13,7 +14,6 @@ import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,7 +37,7 @@ import io.realm.Sort;
 
 
 public class MainActivity extends AppCompatActivity {
-	private Realm       mRealm;
+	private Realm mRealm;
 	/**
 	 * Data-binding.
 	 */
@@ -127,25 +127,37 @@ public class MainActivity extends AppCompatActivity {
 		} );
 	}
 
-	private void updateListView() {
-		if( mSnackbar != null && mSnackbar.isShown() ) {
-			mSnackbar.dismiss();
-		}
-		mBinding.contentSrl.setRefreshing( false );
-		if( mBinding.getAdapter() != null ) {
-			if( mBinding.getAdapter()
-						.getItemCount() > 0 ) {
-				mBinding.getAdapter()
-						.notifyDataSetChanged();
-			}
-		}
-	}
+
 
 	private void initListView() {
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
 		//Load all data(local).
+		Calendar yesterday = Calendar.getInstance();
+		yesterday.add(
+				Calendar.DAY_OF_MONTH,
+				-1
+		);
+		yesterday.set(
+				Calendar.HOUR_OF_DAY,
+				23
+		);
+		yesterday.set(
+				Calendar.MINUTE,
+				59
+		);
+		yesterday.set(
+				Calendar.SECOND,
+				59
+		);
 		mDBData = mRealm.where( ClientDB.class )
-						.findAllAsync();
+						.greaterThan(
+								"reqTime",
+								yesterday.getTimeInMillis()
+						)
+						.findAllSorted(
+								"reqTime",
+								Sort.DESCENDING
+						);
 		mDBData.addChangeListener( mListListener );
 	}
 
@@ -153,21 +165,22 @@ public class MainActivity extends AppCompatActivity {
 	private RealmChangeListener mListListener = new RealmChangeListener() {
 		@Override
 		public void onChange() {
+			mBinding.contentSrl.setRefreshing( false );
 			if( mDBData.isLoaded() ) {
-				mDBData.sort(
-						"reqTime",
-						Sort.DESCENDING
-				);
-				mBinding.setAdapter( new ListAdapter<ClientDB>().setData( mDBData ) );
+				if( mBinding.getAdapter() == null ) {
+					mBinding.setAdapter( new ListAdapter<ClientDB>() );
+				}
+				if( mBinding.getAdapter()
+							.getData() == null ) {
+					mBinding.getAdapter()
+							.setData( mDBData );
+				}
+				mBinding.getAdapter()
+						.notifyDataSetChanged();
 				if( mSnackbar != null && mSnackbar.isShown() ) {
 					mSnackbar.dismiss();
 				}
 			}
-			//dbItems.removeChangeListener( this );
-			Log.d(
-					getClass().getName(),
-					"ListView onChanged"
-			);
 		}
 	};
 

@@ -29,6 +29,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	private long                        mId;
 
+	private boolean mAddedListener;
 
 	/**
 	 * Initialize the manager.
@@ -59,6 +60,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void onDestroy() {
 		mFirebase.removeEventListener( this );
+		mAddedListener = false;
 	}
 
 
@@ -89,7 +91,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		{@link RestObject} to save on Firebase.
 	 */
 	public void save( RestObject newData ) {
-		mFirebase.addChildEventListener( this );
+		if( !mAddedListener ) {
+			mFirebase.addChildEventListener( this );
+			mAddedListener = true;
+		}
 		saveInBackground( newData );
 	}
 
@@ -115,7 +120,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void selectAll( Class<? extends RestObject> respType ) {
 		mRespType = respType;
-		mFirebase.addChildEventListener( this );
+		if( !mAddedListener ) {
+			mFirebase.addChildEventListener( this );
+			mAddedListener = true;
+		}
 	}
 
 	public void executePending( ExecutePending exp ) {
