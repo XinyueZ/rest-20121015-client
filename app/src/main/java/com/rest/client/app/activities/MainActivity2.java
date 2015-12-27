@@ -137,7 +137,6 @@ public class MainActivity2 extends AppCompatActivity {
 	}
 
 
-
 	private void initListView() {
 		mBinding.loadingPb.setVisibility( View.VISIBLE );
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
@@ -168,8 +167,7 @@ public class MainActivity2 extends AppCompatActivity {
 								"reqTime",
 								Sort.DESCENDING
 						);
-		if( !RestUtils.isNetworkAvailable( getApplication())) {
-			mDBData.load();
+		if( RestUtils.shouldLoadLocal( App.Instance ) ) {
 			buildListView();
 		}
 		mDBData.addChangeListener( mListListener );
@@ -203,7 +201,9 @@ public class MainActivity2 extends AppCompatActivity {
 	}
 
 	private void load() {
-		loadList();
+		if( !RestUtils.shouldLoadLocal( App.Instance ) ) {
+			loadList();
+		}
 		sendPending();
 	}
 

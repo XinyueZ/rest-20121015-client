@@ -87,10 +87,16 @@ public final class App extends MultiDexApplication {
 					"firebase_auth",
 					fireInfo[ 1 ]
 			);
+			editor.putInt(
+					"firebase_standard_last_limit",
+					Integer.valueOf( fireInfo[ 2 ] )
+			);
 			editor.commit();
 			mFireManager = new RestFireManager(
 					fireInfo[ 0 ],
-					fireInfo[ 1 ]
+					fireInfo[ 1 ],
+					Integer.valueOf( fireInfo[ 2 ] ),
+					"reqTime"
 			);
 		}
 		mApiManager = new RestApiManager();
@@ -109,10 +115,10 @@ public final class App extends MultiDexApplication {
 
 
 	public static void startAppGuardService( Context cxt ) {
-//		long scheduleSec = 60 * 2;
-		long scheduleSec = 10800L;
-		long flexSecs    = 60L;
-		String tag       = System.currentTimeMillis() + "";
+		//		long scheduleSec = 60 * 2;
+		long   scheduleSec = 10800L;
+		long   flexSecs    = 60L;
+		String tag         = System.currentTimeMillis() + "";
 		PeriodicTask scheduleTask = new PeriodicTask.Builder().setService( AppGuardService.class )
 															  .setPeriod( scheduleSec )
 															  .setFlex( flexSecs )
@@ -124,7 +130,7 @@ public final class App extends MultiDexApplication {
 		GcmNetworkManager.getInstance( cxt )
 						 .schedule( scheduleTask );
 
-		tag       = ( System.currentTimeMillis() + 1 ) + "";
+		tag = ( System.currentTimeMillis() + 1 ) + "";
 		scheduleTask = new PeriodicTask.Builder().setService( AppGuardService2.class )
 												 .setPeriod( scheduleSec )
 												 .setFlex( flexSecs )

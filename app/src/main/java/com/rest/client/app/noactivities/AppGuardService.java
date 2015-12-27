@@ -46,8 +46,21 @@ public final class AppGuardService extends GcmTaskService {
 				"firebase",
 				Context.MODE_PRIVATE
 		);
-		RestFireManager mgr = new RestFireManager(firebaseRef.getString( "firebase_url", null ),
-												  firebaseRef.getString( "firebase_auth", null ));
+		RestFireManager mgr = new RestFireManager(
+				firebaseRef.getString(
+						"firebase_url",
+						null
+				),
+				firebaseRef.getString(
+						"firebase_auth",
+						null
+				),
+				firebaseRef.getInt(
+						"firebase_standard_last_limit",
+						30
+				),
+				"reqTime"
+		);
 		mgr.onCreate( getApplication() );
 		Client client = new Client();
 		client.setReqId( UUID.randomUUID()

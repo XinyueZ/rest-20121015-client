@@ -165,8 +165,7 @@ public class MainActivity extends AppCompatActivity {
 								"reqTime",
 								Sort.DESCENDING
 						);
-		if( !RestUtils.isNetworkAvailable( getApplication() ) ) {
-			mDBData.load();
+		if( RestUtils.shouldLoadLocal( App.Instance ) ) {
 			buildListView();
 		}
 		mDBData.addChangeListener( mListListener );
@@ -200,6 +199,38 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 
+	private void load() {
+		if( !RestUtils.shouldLoadLocal( App.Instance ) ) {
+			loadList();
+		}
+		sendPending();
+	}
+
+	private void loadList() {
+		App.Instance.getFireManager()
+					.selectAll( Client.class );
+	}
+
+	private void sendPending() {
+		App.Instance.getFireManager()
+					.executePending( new ExecutePending() {
+						@Override
+						public void executePending( List<RestObject> pendingItems ) {
+							for( RestObject object : pendingItems ) {
+								Client client = (Client) object;
+								App.Instance.getFireManager()
+											.saveInBackground( client );
+							}
+						}
+
+						@Override
+						public RestObject build() {
+							return new Client();
+						}
+					} );
+	}
+
+
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu ) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -230,34 +261,6 @@ public class MainActivity extends AppCompatActivity {
 		return super.onOptionsItemSelected( item );
 	}
 
-	private void load() {
-		loadList();
-		sendPending();
-	}
-
-	private void loadList() {
-		App.Instance.getFireManager()
-					.selectAll( Client.class );
-	}
-
-	private void sendPending() {
-		App.Instance.getFireManager()
-					.executePending( new ExecutePending() {
-						@Override
-						public void executePending( List<RestObject> pendingItems ) {
-							for( RestObject object : pendingItems ) {
-								Client client = (Client) object;
-								App.Instance.getFireManager()
-											.saveInBackground( client );
-							}
-						}
-
-						@Override
-						public RestObject build() {
-							return new Client();
-						}
-					} );
-	}
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {

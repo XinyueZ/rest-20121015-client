@@ -11,6 +11,9 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.Nullable;
+import android.telephony.TelephonyManager;
+
+import com.rest.client.app.App;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -117,7 +120,7 @@ public final class RestUtils {
 	 * @param useFirebase
 	 * 		{@code true} if this application use Firebase.
 	 *
-	 * @return An array of strings, first element is the base url to Firebase, second is auth code to it.
+	 * @return An array of strings, first element is the base url to Firebase, second is auth code to it, third is last-limit of data.
 	 */
 	public static
 	@Nullable
@@ -136,7 +139,8 @@ public final class RestUtils {
 					prop.load( input );
 					String url  = prop.getProperty( "firebase_url" );
 					String auth = prop.getProperty( "firebase_auth" );
-					return new String[] { url , auth };
+					String limitLast =  prop.getProperty( "firebase_standard_last_limit" );
+					return new String[] { url , auth, limitLast };
 				}
 			} catch( IOException ex ) {
 				ex.printStackTrace();
@@ -151,5 +155,57 @@ public final class RestUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * A common condition check whether application should load new data or not.
+	 *
+	 * @param cxt
+	 * 		{@link Context}.
+	 *
+	 * @return {@code true} when the application needs to load local data.
+	 */
+	public static boolean shouldLoadLocal( Context cxt ) {
+		boolean should;
+		should = !RestUtils.isNetworkAvailable( cxt );
+		should |= getCurrentNetworkType( App.Instance ) != CONNECTION_WIFI;
+		return should;
+	}
+
+	public static final byte CONNECTION_OFFLINE = 1;
+	public static final byte CONNECTION_WIFI    = 2;
+	public static final byte CONNECTION_ROAMING = 3;
+	public static final byte CONNECTION_SLOW    = 4;
+	public static final byte CONNECTION_FAST    = 5;
+
+	/**
+	 * Evaluate the current network connection and return the corresponding type, e.g. CONNECTION_WIFI.
+	 */
+	public static byte getCurrentNetworkType( Context _context ) {
+		NetworkInfo netInfo = ( (ConnectivityManager) _context.getSystemService( Context.CONNECTIVITY_SERVICE ) ).getActiveNetworkInfo();
+
+		if( netInfo == null ) {
+			return CONNECTION_OFFLINE;
+		}
+
+		if( netInfo.getType() == ConnectivityManager.TYPE_WIFI ) {
+			return CONNECTION_WIFI;
+		}
+
+		if( netInfo.isRoaming() ) {
+			return CONNECTION_ROAMING;
+		}
+
+		if( !( netInfo.getType() == ConnectivityManager.TYPE_MOBILE &&
+			   ( netInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_UMTS || netInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_HSDPA ||
+				 netInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_HSUPA || netInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_HSPA ||
+				 netInfo.getSubtype() == 13 // NETWORK_TYPE_LTE
+				 || netInfo.getSubtype() == 15 ) ) ) // NETWORK_TYPE_HSPAP
+		{
+
+			return CONNECTION_SLOW;
+		}
+
+		return CONNECTION_FAST;
 	}
 }

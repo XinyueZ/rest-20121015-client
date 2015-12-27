@@ -9,6 +9,7 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.Firebase.AuthResultHandler;
 import com.firebase.client.FirebaseError;
+import com.firebase.client.Query;
 import com.rest.client.rest.events.AuthenticatedEvent;
 import com.rest.client.rest.events.AuthenticationErrorEvent;
 
@@ -24,6 +25,9 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	private String                      mUrl;
 	private String                      mAuth;
 	private Firebase                    mFirebase;
+	private Query                       mQuery;
+	private int                         mLastLimit;
+	private String                      mOrderBy;
 	private Class<? extends RestObject> mRespType;
 	/**
 	 * The id of manger.
@@ -41,10 +45,16 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * 		The base-url to used Firebase.
 	 * @param auth
 	 * 		The auth-info to used Firebase.
+	 * @param lastLimit
+	 * 		The last-limit data of data.
+	 * @param orderBy
+	 * 		Order by some keys.
 	 */
-	public RestFireManager( String url, String auth ) {
+	public RestFireManager( String url, String auth, int lastLimit, String orderBy ) {
 		mUrl = url;
 		mAuth = auth;
+		mLastLimit = lastLimit;
+		mOrderBy = orderBy;
 	}
 
 	/**
@@ -58,6 +68,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 		Firebase.setAndroidContext( app );
 		mFirebase = new Firebase( mUrl );
 		mFirebase.keepSynced( true );
+		mQuery = mFirebase.orderByChild( mOrderBy ).limitToLast( mLastLimit );
 		mFirebase.authWithCustomToken(
 				mAuth,
 				this
@@ -75,7 +86,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 * Called when do not need manager.
 	 */
 	public void onDestroy() {
-		mFirebase.removeEventListener( this );
+		mQuery.removeEventListener( this );
 		mAddedListener = false;
 	}
 
@@ -108,7 +119,7 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	 */
 	public void save( RestObject newData ) {
 		if( !mAddedListener ) {
-			mFirebase.addChildEventListener( this );
+			mQuery.addChildEventListener( this );
 			mAddedListener = true;
 		}
 		saveInBackground( newData );
@@ -137,10 +148,10 @@ public class RestFireManager implements AuthResultHandler, ChildEventListener {
 	public void selectAll( Class<? extends RestObject> respType ) {
 		mRespType = respType;
 		if( mAddedListener ) {
-			mFirebase.removeEventListener( this );
+			mQuery.removeEventListener( this );
 			mAddedListener = false;
 		}
-		mFirebase.addChildEventListener( this );
+		mQuery.addChildEventListener( this );
 		mAddedListener = true;
 	}
 
