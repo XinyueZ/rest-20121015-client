@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
 				Calendar.SECOND,
 				59
 		);
+
 		mDBData = mRealm.where( ClientDB.class )
 						.greaterThan(
 								"reqTime",
@@ -165,9 +166,6 @@ public class MainActivity extends AppCompatActivity {
 								"reqTime",
 								Sort.DESCENDING
 						);
-		if( RestUtils.shouldLoadLocal( App.Instance ) ) {
-			buildListView();
-		}
 		mDBData.addChangeListener( mListListener );
 	}
 
