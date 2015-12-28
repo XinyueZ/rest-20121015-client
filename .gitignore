@@ -32,5 +32,6 @@ local.properties
 proguard/
 
 # Log Files
-*.log
->>>>>>> 8ff03b79bb30b017c12ae282a60184115822e28a
+*.log 
+
+firebase.properties
