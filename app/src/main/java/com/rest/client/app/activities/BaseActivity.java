@@ -113,6 +113,7 @@ public abstract class BaseActivity extends RestfulActivity {
 		return ClientDB.class;
 	}
 
+	//onNetworkConnected() ignored.
 	//-------------------------------------------------------------------------
 
 	@Override
