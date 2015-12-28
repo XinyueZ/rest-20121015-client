@@ -6,28 +6,21 @@ import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.rest.client.R;
-import com.rest.client.app.App;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientDB;
-import com.rest.client.rest.RestUtils;
+import com.rest.client.rest.activities.RestfulActivity;
 import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
-import de.greenrobot.event.EventBus;
-import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmResults;
-import io.realm.Sort;
+import io.realm.RealmObject;
 
-public abstract class BaseActivity extends AppCompatActivity {
-	private Realm       mRealm;
+public abstract class BaseActivity extends RestfulActivity {
 	/**
 	 * Data-binding.
 	 */
@@ -59,19 +52,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
 	//------------------------------------------------
 
-	private void initComponents() {
-		mBinding = DataBindingUtil.setContentView(
-				this,
-				LAYOUT
-		);
-		setSupportActionBar( mBinding.toolbar );
-
-		mSnackbar = Snackbar.make(
-				mBinding.rootView,
-				"Getting client list...",
-				Snackbar.LENGTH_INDEFINITE
-		);
-	}
 
 	private void initFAB() {
 		mBinding.fab.setOnClickListener( new View.OnClickListener() {
@@ -103,40 +83,42 @@ public abstract class BaseActivity extends AppCompatActivity {
 		} );
 	}
 
+	//-------------------------------------------------------------------------
+	@Override
+	protected void initDataBinding() {
+		mBinding = DataBindingUtil.setContentView(
+				this,
+				LAYOUT
+		);
+		setSupportActionBar( mBinding.toolbar );
 
-	private void initListView() {
-		mBinding.loadingPb.setVisibility( View.VISIBLE );
-		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		mDBData = mRealm.where( ClientDB.class )
-						.findAllSorted(
-								"reqTime",
-								Sort.DESCENDING
-						);
-		mDBData.addChangeListener( mListListener );
-		if( RestUtils.shouldLoadLocal( App.Instance ) ) {
-			buildListView();
-		}
+		mSnackbar = Snackbar.make(
+				mBinding.rootView,
+				"Getting client list...",
+				Snackbar.LENGTH_INDEFINITE
+		);
 	}
 
 
-	private RealmResults<ClientDB> mDBData;
-	private RealmChangeListener mListListener = new RealmChangeListener() {
-		@Override
-		public void onChange() {
-			buildListView();
-		}
-	};
+	@Override
+	protected void initRestUI() {
+		mBinding.loadingPb.setVisibility( View.VISIBLE );
+		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
+		super.initRestUI();
+	}
 
-	private void buildListView() {
+
+	@Override
+	protected void buildRestUI() {
 		mBinding.contentSrl.setRefreshing( false );
-		if( mDBData.isLoaded() ) {
+		if( isDataLoaded() ) {
 			if( mBinding.getAdapter() == null ) {
 				mBinding.setAdapter( new ListAdapter<ClientDB>() );
 			}
 			if( mBinding.getAdapter()
 						.getData() == null ) {
 				mBinding.getAdapter()
-						.setData( mDBData );
+						.setData( getData() );
 			}
 			mBinding.getAdapter()
 					.notifyDataSetChanged();
@@ -146,27 +128,16 @@ public abstract class BaseActivity extends AppCompatActivity {
 		}
 	}
 
-
-	private void load() {
-		if( !RestUtils.shouldLoadLocal( App.Instance ) ) {
-			loadList();
-		}
-		sendPending();
+	protected Class<? extends RealmObject> getDataClazz() {
+		return ClientDB.class;
 	}
 
-	protected abstract void sendPending();
-
-	protected abstract void loadList();
-
+	//-------------------------------------------------------------------------
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
-		mRealm = Realm.getDefaultInstance();
-		initComponents();
-		initListView();
 		initFAB();
-		load();
 		mBinding.contentSrl.setColorSchemeResources(
 				R.color.color_pocket_1,
 				R.color.color_pocket_2,
@@ -179,31 +150,5 @@ public abstract class BaseActivity extends AppCompatActivity {
 				loadList();
 			}
 		} );
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		EventBus.getDefault()
-				.registerSticky( this );
-
-	}
-
-	@Override
-	protected void onPause() {
-		EventBus.getDefault()
-				.unregister( this );
-		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		if( mDBData != null && mListListener != null ) {
-			mDBData.removeChangeListener( mListListener );
-		}
-		if( mRealm != null && !mRealm.isClosed() ) {
-			mRealm.close();
-		}
-		super.onDestroy();
 	}
 }
