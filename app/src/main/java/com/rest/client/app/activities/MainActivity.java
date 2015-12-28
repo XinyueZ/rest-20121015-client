@@ -10,6 +10,7 @@ import android.view.MenuItem;
 
 import com.rest.client.R;
 import com.rest.client.app.App;
+import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.ExecutePending;
@@ -67,6 +68,14 @@ public class MainActivity extends BaseActivity {
 					} );
 	}
 
+	@Override
+	protected void showCommentDialog() {
+		EditCommitDialogFragment.newInstance(  this )
+								.show(
+										 getSupportFragmentManager(),
+										 null
+								 );
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu ) {

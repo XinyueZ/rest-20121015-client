@@ -33,16 +33,13 @@ public abstract class BaseActivity extends RestfulActivity {
 	 */
 	private Snackbar mSnackbar;
 
+	protected abstract  void showCommentDialog();
 
 	private void initFAB() {
 		mBinding.fab.setOnClickListener( new View.OnClickListener() {
 			@Override
 			public void onClick( View view ) {
-				EditCommitDialogFragment2.newInstance( BaseActivity.this )
-										 .show(
-												 getSupportFragmentManager(),
-												 null
-										 );
+				showCommentDialog();
 			}
 		} );
 

@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
+import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.RequestForResponse;
@@ -79,6 +80,15 @@ public class MainActivity2 extends BaseActivity {
 										.getList( rfr ),
 							rfr
 					);
+	}
+
+	@Override
+	protected void showCommentDialog() {
+		EditCommitDialogFragment2.newInstance( this )
+								 .show(
+										getSupportFragmentManager(),
+										null
+								);
 	}
 
 	@Override
