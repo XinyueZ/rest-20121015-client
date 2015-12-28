@@ -16,7 +16,6 @@ import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.rest.activities.RestfulActivity;
-import com.rest.client.rest.events.UpdateNetworkStatusEvent;
 
 import io.realm.RealmObject;
 
@@ -33,24 +32,6 @@ public abstract class BaseActivity extends RestfulActivity {
 	 * Message holder.
 	 */
 	private Snackbar mSnackbar;
-
-	//------------------------------------------------
-	//Subscribes, event-handlers
-	//------------------------------------------------
-
-	/**
-	 * Handler for {@link UpdateNetworkStatusEvent}.
-	 *
-	 * @param e
-	 * 		Event {@link UpdateNetworkStatusEvent}.
-	 */
-	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
-		if( e.isConnected() ) {
-			sendPending();
-		}
-	}
-
-	//------------------------------------------------
 
 
 	private void initFAB() {

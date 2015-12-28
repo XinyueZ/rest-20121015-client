@@ -33,7 +33,7 @@ public abstract class RestfulActivity<C extends Class<? extends RealmObject>> ex
 	 */
 	public void onEventMainThread( UpdateNetworkStatusEvent e ) {
 		if( e.isConnected() ) {
-			sendPending();
+			onNetworkConnected();
 		}
 	}
 
@@ -78,6 +78,13 @@ public abstract class RestfulActivity<C extends Class<? extends RealmObject>> ex
 	protected abstract void loadList();
 
 	protected abstract void buildRestUI();
+
+	/**
+	 * Callback when event of network status changed and connection is connected.
+	 */
+	protected void onNetworkConnected() {
+		sendPending();
+	}
 
 	protected RealmResults<? extends RealmObject> getData() {
 		return mRealmData;
