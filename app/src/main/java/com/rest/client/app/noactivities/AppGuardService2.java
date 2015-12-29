@@ -12,7 +12,7 @@ import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
 import com.rest.client.api.Api;
 import com.rest.client.ds.Client;
-import com.rest.client.rest.RestApiManager;
+import com.chopping.rest.RestApiManager;
 
 public final class AppGuardService2 extends GcmTaskService {
 	private static final String TAG = "AppGuardService2";

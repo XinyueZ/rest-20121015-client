@@ -4,7 +4,7 @@ package com.rest.client.ds;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
-import com.rest.client.rest.RestObject;
+import com.chopping.rest.RestObject;
 
 import io.realm.Realm;
 import io.realm.RealmList;

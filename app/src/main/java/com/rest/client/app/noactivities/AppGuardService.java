@@ -13,7 +13,7 @@ import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
 import com.rest.client.ds.Client;
-import com.rest.client.rest.RestFireManager;
+import com.chopping.rest.RestFireManager;
 
 public final class AppGuardService extends GcmTaskService {
 	private static final String TAG = "AppGuardService";

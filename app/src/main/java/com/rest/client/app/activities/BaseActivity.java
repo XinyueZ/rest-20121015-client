@@ -12,10 +12,9 @@ import android.view.View;
 
 import com.rest.client.R;
 import com.rest.client.app.adapters.ListAdapter;
-import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientDB;
-import com.rest.client.rest.activities.RestfulActivity;
+import com.chopping.activities.RestfulActivity;
 
 import io.realm.RealmObject;
 

@@ -54,7 +54,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".rest.RestNetworkChangeReceiver">
+        <receiver android:name="com.chopping.rest.RestNetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />

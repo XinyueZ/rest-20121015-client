@@ -42,9 +42,9 @@ import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.app.noactivities.AppGuardService2;
-import com.rest.client.rest.RestApiManager;
-import com.rest.client.rest.RestFireManager;
-import com.rest.client.rest.RestUtils;
+import com.chopping.rest.RestApiManager;
+import com.chopping.rest.RestFireManager;
+import com.chopping.rest.RestUtils;
 
 
 /**

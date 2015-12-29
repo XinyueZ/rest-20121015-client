@@ -16,9 +16,9 @@ import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.RequestForResponse;
-import com.rest.client.rest.ExecutePending;
-import com.rest.client.rest.RestObject;
-import com.rest.client.rest.RestUtils;
+import com.chopping.rest.ExecutePending;
+import com.chopping.rest.RestObject;
+import com.chopping.rest.RestUtils;
 
 
 public class MainActivity2 extends BaseActivity {
