@@ -1,12 +1,13 @@
 package com.rest.client.ds;
 
 
+import com.chopping.rest.RestObject;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
-import com.chopping.rest.RestObject;
 
 import io.realm.Realm;
 import io.realm.RealmObject;
+import io.realm.RealmResults;
 
 public class Client extends RestObject {
 
@@ -46,11 +47,25 @@ public class Client extends RestObject {
 
 	@Override
 	public RealmObject[] newInstances( Realm db, int status ) {
-		ClientDB dbItem = new ClientDB();
-		dbItem.setReqId( getReqId() );
-		dbItem.setReqTime( getReqTime() );
-		dbItem.setComment( getComment() );
-		dbItem.setStatus( status );
+		ClientDB dbItem;
+		switch( status ) {
+			case DELETE_SYNCED:
+				RealmResults<ClientDB> dbItems = db.where( ClientDB.class )
+												   .equalTo(
+														   "reqId",
+														   getReqId()
+												   )
+												   .findAll();
+				dbItem = dbItems.first();
+				break;
+			default:
+				dbItem = new ClientDB();
+				dbItem.setReqId( getReqId() );
+				dbItem.setReqTime( getReqTime() );
+				dbItem.setComment( getComment() );
+				dbItem.setStatus( status );
+				break;
+		}
 		return new RealmObject[] { dbItem };
 	}
 

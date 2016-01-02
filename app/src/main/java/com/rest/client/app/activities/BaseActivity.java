@@ -10,11 +10,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
+import com.chopping.activities.RestfulActivity;
 import com.rest.client.R;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientDB;
-import com.chopping.activities.RestfulActivity;
 
 import io.realm.RealmObject;
 
@@ -32,7 +32,11 @@ public abstract class BaseActivity extends RestfulActivity {
 	 */
 	private Snackbar mSnackbar;
 
-	protected abstract  void showCommentDialog();
+	protected abstract void showCommentDialog();
+
+	protected MainBinding getBinding() {
+		return mBinding;
+	}
 
 	private void initFAB() {
 		mBinding.fab.setOnClickListener( new View.OnClickListener() {
@@ -129,4 +133,6 @@ public abstract class BaseActivity extends RestfulActivity {
 			}
 		} );
 	}
+
+
 }

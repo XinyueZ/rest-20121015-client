@@ -8,18 +8,29 @@ import android.support.v4.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.rest.client.R;
-import com.rest.client.app.App;
-import com.rest.client.app.fragments.EditCommitDialogFragment;
-import com.rest.client.ds.Client;
-import com.rest.client.ds.ClientDB;
 import com.chopping.rest.ExecutePending;
 import com.chopping.rest.RestObject;
 import com.chopping.rest.RestUtils;
+import com.rest.client.R;
+import com.rest.client.app.App;
+import com.rest.client.app.fragments.EditCommitDialogFragment;
+import com.rest.client.bus.DeleteEvent;
+import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientDB;
 
 
 public class MainActivity extends BaseActivity {
 
+	/**
+	 * Handler for {@link DeleteEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link DeleteEvent}.
+	 */
+	public void onEventMainThread( DeleteEvent e ) {
+		getBinding().getAdapter().notifyItemChanged( e.getPosition() );
+		App.Instance.getFireManager().delete( new Client().fromDB( e.getDBObject() ) );
+	}
 
 	/**
 	 * Show single instance of {@link MainActivity}
@@ -65,7 +76,25 @@ public class MainActivity extends BaseActivity {
 						public RestObject build() {
 							return new Client();
 						}
-					} );
+					}, RestObject.NOT_SYNCED );
+
+
+		App.Instance.getFireManager()
+					.executePending( new ExecutePending() {
+						@Override
+						public void executePending( List<RestObject> pendingItems ) {
+							for( RestObject object : pendingItems ) {
+								Client client = (Client) object;
+								App.Instance.getFireManager()
+											.delete( client );
+							}
+						}
+
+						@Override
+						public RestObject build() {
+							return new Client();
+						}
+					}, RestObject.DELETE );
 	}
 
 	@Override

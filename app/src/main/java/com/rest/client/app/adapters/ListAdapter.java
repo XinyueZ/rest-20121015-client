@@ -27,11 +27,11 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	/**
 	 * Main layout for this component.
 	 */
-	private static final int     ITEM_LAYOUT  = R.layout.item_layout;
+	private static final int ITEM_LAYOUT = R.layout.item_layout;
 	/**
 	 * Data-source.
 	 */
-	private              List<T> mVisibleData;
+	private List<T> mVisibleData;
 
 	/**
 	 * Get current used data-source.
@@ -131,6 +131,10 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 				com.rest.client.BR.cxt,
 				App.Instance
 		);
+		holder.mBinding.setVariable(
+				BR.handler,
+				new ListItemHandler<>(holder, this)
+		);
 		holder.mBinding.executePendingBindings();
 	}
 
@@ -151,7 +155,7 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 	/**
 	 * ViewHolder for the list.
 	 */
-	static class ViewHolder extends RecyclerView.ViewHolder {
+	public static class ViewHolder extends RecyclerView.ViewHolder {
 		private ViewDataBinding mBinding;
 
 		ViewHolder( ViewDataBinding binding ) {
@@ -159,4 +163,7 @@ public final class ListAdapter<T extends RealmObject> extends RecyclerView.Adapt
 			mBinding = binding;
 		}
 	}
+
+
+
 }

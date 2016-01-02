@@ -9,20 +9,41 @@ import android.support.v4.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.chopping.rest.ExecutePending;
+import com.chopping.rest.RestObject;
+import com.chopping.rest.RestUtils;
 import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
+import com.rest.client.bus.DeleteEvent;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
+import com.rest.client.ds.ClientDeleteRequest;
 import com.rest.client.ds.RequestForResponse;
-import com.chopping.rest.ExecutePending;
-import com.chopping.rest.RestObject;
-import com.chopping.rest.RestUtils;
 
 
 public class MainActivity2 extends BaseActivity {
 
+	/**
+	 * Handler for {@link DeleteEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link DeleteEvent}.
+	 */
+	public void onEventMainThread( DeleteEvent e ) {
+		getBinding().getAdapter()
+					.notifyItemChanged( e.getPosition() );
+		ClientDeleteRequest delClient = new ClientDeleteRequest();
+		delClient.setReqId( new Client().fromDB( e.getDBObject() )
+										.getReqId() );
+		App.Instance.getApiManager()
+					.deleteAsync(
+							Api.Retrofit.create( Api.class )
+										.deleteClient( delClient ),
+							delClient
+					);
+	}
 
 	/**
 	 * Show single instance of {@link MainActivity2}
@@ -47,25 +68,54 @@ public class MainActivity2 extends BaseActivity {
 	@Override
 	protected void sendPending() {
 		App.Instance.getApiManager()
-					.executePending( new ExecutePending() {
-						@Override
-						public void executePending( List<RestObject> pendingItems ) {
-							for( RestObject object : pendingItems ) {
-								Client client = (Client) object;
-								App.Instance.getApiManager()
-											.execAsync(
-													Api.Retrofit.create( Api.class )
-																.addClient( client ),
-													client
-											);
-							}
-						}
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										Client client = (Client) object;
+										App.Instance.getApiManager()
+													.execAsync(
+															Api.Retrofit.create( Api.class )
+																		.addClient( client ),
+															client
+													);
+									}
+								}
 
-						@Override
-						public RestObject build() {
-							return new Client();
-						}
-					} );
+								@Override
+								public RestObject build() {
+									return new Client();
+								}
+							},
+							RestObject.NOT_SYNCED
+					);
+
+
+		App.Instance.getApiManager()
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										ClientDeleteRequest delClient = new ClientDeleteRequest();
+										delClient.setReqId( object.getReqId() );
+										App.Instance.getApiManager()
+													.deleteAsync(
+															Api.Retrofit.create( Api.class )
+																		.deleteClient( delClient ),
+															delClient
+													);
+									}
+								}
+
+								@Override
+								public RestObject build() {
+									return new Client();
+								}
+							},
+							RestObject.DELETE
+					);
 	}
 
 	@Override
@@ -86,9 +136,9 @@ public class MainActivity2 extends BaseActivity {
 	protected void showCommentDialog() {
 		EditCommitDialogFragment2.newInstance( this )
 								 .show(
-										getSupportFragmentManager(),
-										null
-								);
+										 getSupportFragmentManager(),
+										 null
+								 );
 	}
 
 	@Override

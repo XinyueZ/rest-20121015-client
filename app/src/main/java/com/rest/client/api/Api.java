@@ -2,6 +2,8 @@ package com.rest.client.api;
 
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientAddedResponse;
+import com.rest.client.ds.ClientDeleteRequest;
+import com.rest.client.ds.ClientDeletedResponse;
 import com.rest.client.ds.RequestForResponse;
 import com.rest.client.ds.Response;
 
@@ -22,4 +24,7 @@ public interface Api {
 
 	@POST("/list")
 	Call<Response> getList( @Body RequestForResponse client );
+
+	@POST("/delete")
+	Call<ClientDeletedResponse> deleteClient( @Body ClientDeleteRequest deleteRequest );
 }
