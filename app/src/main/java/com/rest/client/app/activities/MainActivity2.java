@@ -11,7 +11,6 @@ import android.view.MenuItem;
 
 import com.chopping.rest.ExecutePending;
 import com.chopping.rest.RestObject;
-import com.chopping.rest.RestUtils;
 import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
@@ -19,7 +18,6 @@ import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.bus.DeleteEvent;
 import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
-import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.ClientDeleteRequest;
 import com.rest.client.ds.ClientEditRequest;
 import com.rest.client.ds.RequestForResponse;
@@ -213,7 +211,7 @@ public class MainActivity2 extends BaseActivity {
 				MainActivity.showInstance( this );
 				return true;
 			case R.id.action_clear_pending:
-				RestUtils.clearPending( ClientDB.class );
+				clearPendings();
 				return true;
 		}
 

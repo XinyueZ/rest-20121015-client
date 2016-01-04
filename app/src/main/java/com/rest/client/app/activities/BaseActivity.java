@@ -11,10 +11,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.chopping.activities.RestfulActivity;
+import com.chopping.utils.RestUtils;
 import com.rest.client.R;
 import com.rest.client.app.adapters.ListAdapter;
 import com.rest.client.databinding.MainBinding;
 import com.rest.client.ds.ClientDB;
+import com.rest.client.ds.RequestForResponseDB;
+import com.rest.client.ds.ResponseDB;
 
 import io.realm.RealmObject;
 
@@ -115,6 +118,12 @@ public abstract class BaseActivity extends RestfulActivity {
 
 	//onNetworkConnected() ignored.
 	//-------------------------------------------------------------------------
+
+	protected void clearPendings() {
+		RestUtils.clearPending( ClientDB.class );
+		RestUtils.clearPending( RequestForResponseDB.class );
+		RestUtils.clearPending( ResponseDB.class );
+	}
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {

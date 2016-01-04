@@ -10,14 +10,12 @@ import android.view.MenuItem;
 
 import com.chopping.rest.ExecutePending;
 import com.chopping.rest.RestObject;
-import com.chopping.rest.RestUtils;
 import com.rest.client.R;
 import com.rest.client.app.App;
 import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.bus.DeleteEvent;
 import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
-import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.ClientEditRequest;
 
 
@@ -53,10 +51,11 @@ public class MainActivity extends BaseActivity {
 		EditCommitDialogFragment.newInstance(
 				this,
 				new ClientEditRequest().assignFromClient( (Client) new Client().newFromDB( e.getDBObject() ) )
-		).show(
-				getSupportFragmentManager(),
-				null
-		);
+		)
+								.show(
+										getSupportFragmentManager(),
+										null
+								);
 	}
 
 	//------------------------------------------------
@@ -179,7 +178,7 @@ public class MainActivity extends BaseActivity {
 				MainActivity2.showInstance( this );
 				return true;
 			case R.id.action_clear_pending:
-				RestUtils.clearPending( ClientDB.class );
+				clearPendings();
 				return true;
 		}
 

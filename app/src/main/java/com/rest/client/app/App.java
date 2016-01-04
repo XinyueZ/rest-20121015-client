@@ -44,7 +44,7 @@ import com.rest.client.app.noactivities.AppGuardService;
 import com.rest.client.app.noactivities.AppGuardService2;
 import com.chopping.rest.RestApiManager;
 import com.chopping.rest.RestFireManager;
-import com.chopping.rest.RestUtils;
+import com.chopping.utils.RestUtils;
 
 
 /**
