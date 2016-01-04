@@ -15,11 +15,16 @@ import com.rest.client.R;
 import com.rest.client.app.App;
 import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.bus.DeleteEvent;
+import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
+import com.rest.client.ds.EditClientRequest;
 
 
 public class MainActivity extends BaseActivity {
+	//------------------------------------------------
+	//Subscribes, event-handlers
+	//------------------------------------------------
 
 	/**
 	 * Handler for {@link DeleteEvent}.
@@ -28,9 +33,33 @@ public class MainActivity extends BaseActivity {
 	 * 		Event {@link DeleteEvent}.
 	 */
 	public void onEventMainThread( DeleteEvent e ) {
-		getBinding().getAdapter().notifyItemChanged( e.getPosition() );
-		App.Instance.getFireManager().delete( new Client().fromDB( e.getDBObject() ) );
+		getBinding().getAdapter()
+					.notifyItemChanged( e.getPosition() );
+		App.Instance.getFireManager()
+					.delete( new Client().fromDB( e.getDBObject() ) );
 	}
+
+
+	/**
+	 * Handler for {@link EditEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link EditEvent}.
+	 */
+	public void onEventMainThread( EditEvent e ) {
+		getBinding().getAdapter()
+					.notifyItemChanged( e.getPosition() );
+
+		EditCommitDialogFragment.newInstance(
+				this,
+				new EditClientRequest().fromClient( (Client) new Client().fromDB( e.getDBObject() ) )
+		).show(
+				getSupportFragmentManager(),
+				null
+		);
+	}
+
+	//------------------------------------------------
 
 	/**
 	 * Show single instance of {@link MainActivity}
@@ -62,48 +91,75 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void sendPending() {
 		App.Instance.getFireManager()
-					.executePending( new ExecutePending() {
-						@Override
-						public void executePending( List<RestObject> pendingItems ) {
-							for( RestObject object : pendingItems ) {
-								Client client = (Client) object;
-								App.Instance.getFireManager()
-											.saveInBackground( client );
-							}
-						}
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										Client client = (Client) object;
+										App.Instance.getFireManager()
+													.saveInBackground( client );
+									}
+								}
 
-						@Override
-						public RestObject build() {
-							return new Client();
-						}
-					}, RestObject.NOT_SYNCED );
+								@Override
+								public RestObject build() {
+									return new Client();
+								}
+							},
+							RestObject.NOT_SYNCED
+					);
 
 
 		App.Instance.getFireManager()
-					.executePending( new ExecutePending() {
-						@Override
-						public void executePending( List<RestObject> pendingItems ) {
-							for( RestObject object : pendingItems ) {
-								Client client = (Client) object;
-								App.Instance.getFireManager()
-											.delete( client );
-							}
-						}
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										Client client = (Client) object;
+										App.Instance.getFireManager()
+													.delete( client );
+									}
+								}
 
-						@Override
-						public RestObject build() {
-							return new Client();
-						}
-					}, RestObject.DELETE );
+								@Override
+								public RestObject build() {
+									return new Client();
+								}
+							},
+							RestObject.DELETE
+					);
+
+
+		App.Instance.getFireManager()
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										EditClientRequest client = (EditClientRequest) object;
+										App.Instance.getFireManager()
+													.update( client );
+									}
+								}
+
+								@Override
+								public RestObject build() {
+									return new EditClientRequest();
+								}
+							},
+							RestObject.UPDATE
+					);
 	}
 
 	@Override
 	protected void showCommentDialog() {
-		EditCommitDialogFragment.newInstance(  this )
+		EditCommitDialogFragment.newInstance( this )
 								.show(
-										 getSupportFragmentManager(),
-										 null
-								 );
+										getSupportFragmentManager(),
+										null
+								);
 	}
 
 	@Override

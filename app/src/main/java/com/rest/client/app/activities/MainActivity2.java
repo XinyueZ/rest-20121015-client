@@ -17,13 +17,18 @@ import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.app.fragments.EditCommitDialogFragment2;
 import com.rest.client.bus.DeleteEvent;
+import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.ClientDeleteRequest;
+import com.rest.client.ds.EditClientRequest;
 import com.rest.client.ds.RequestForResponse;
 
 
 public class MainActivity2 extends BaseActivity {
+	//------------------------------------------------
+	//Subscribes, event-handlers
+	//------------------------------------------------
 
 	/**
 	 * Handler for {@link DeleteEvent}.
@@ -44,6 +49,30 @@ public class MainActivity2 extends BaseActivity {
 							delClient
 					);
 	}
+
+
+	/**
+	 * Handler for {@link EditEvent}.
+	 *
+	 * @param e
+	 * 		Event {@link EditEvent}.
+	 */
+	public void onEventMainThread( EditEvent e ) {
+		getBinding().getAdapter()
+					.notifyItemChanged( e.getPosition() );
+
+		EditCommitDialogFragment2.newInstance(
+				this,
+				new EditClientRequest().fromClient( (Client) new Client().fromDB( e.getDBObject() ) )
+		).show(
+				getSupportFragmentManager(),
+				null
+		);
+	}
+
+
+	//------------------------------------------------
+
 
 	/**
 	 * Show single instance of {@link MainActivity2}
@@ -115,6 +144,31 @@ public class MainActivity2 extends BaseActivity {
 								}
 							},
 							RestObject.DELETE
+					);
+
+
+		App.Instance.getApiManager()
+					.executePending(
+							new ExecutePending() {
+								@Override
+								public void executePending( List<RestObject> pendingItems ) {
+									for( RestObject object : pendingItems ) {
+										EditClientRequest editClient = (EditClientRequest) object;
+										App.Instance.getApiManager()
+													.updateAsync(
+															Api.Retrofit.create( Api.class )
+																		.updateClient( editClient ),
+															editClient
+													);
+									}
+								}
+
+								@Override
+								public RestObject build() {
+									return new EditClientRequest();
+								}
+							},
+							RestObject.UPDATE
 					);
 	}
 

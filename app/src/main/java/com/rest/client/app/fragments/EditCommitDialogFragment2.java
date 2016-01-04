@@ -20,6 +20,7 @@ import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.EditClientRequest;
 
 public final class EditCommitDialogFragment2 extends DialogFragment {
 	private EditText mCommentEt;
@@ -28,6 +29,20 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 		return (DialogFragment) EditCommitDialogFragment2.instantiate(
 				context,
 				EditCommitDialogFragment2.class.getName()
+		);
+	}
+
+
+	public static DialogFragment newInstance( Context context, EditClientRequest client ) {
+		Bundle args = new Bundle();
+		args.putSerializable(
+				"client",
+				client
+		);
+		return (DialogFragment) EditCommitDialogFragment2.instantiate(
+				context,
+				EditCommitDialogFragment2.class.getName(),
+				args
 		);
 	}
 
@@ -48,6 +63,11 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 				rightleft,
 				topbottom
 		);
+
+		if( getArguments() != null ) {
+			EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+			mCommentEt.setText( client.getComment() );
+		}
 		return new AlertDialog.Builder( getActivity() ).setTitle( "Comment" )
 													   .setView( mCommentEt )
 													   .setCancelable( true )
@@ -55,22 +75,41 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 															   android.R.string.ok,
 															   new DialogInterface.OnClickListener() {
 																   public void onClick( DialogInterface dialog, int whichButton ) {
-																	   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
-																		   Client client = new Client();
-																		   client.setReqId( UUID.randomUUID()
-																								.toString() );
-																		   client.setReqTime( System.currentTimeMillis() );
-																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
-																															  .toString() );
-																		   App.Instance.getApiManager()
-																					   .execAsync(
-																							   Api.Retrofit.create( Api.class )
-																										   .addClient( client ),
-																							   client
-																					   );
+																	   if( getArguments() == null ) {
+																		   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
+																			   Client client = new Client();
+																			   client.setReqId( UUID.randomUUID()
+																									.toString() );
+																			   client.setReqTime( System.currentTimeMillis() );
+																			   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																																  .toString() );
+																			   App.Instance.getApiManager()
+																						   .execAsync(
+																								   Api.Retrofit.create( Api.class )
+																											   .addClient( client ),
+																								   client
+																						   );
 
 
-																		   dismiss();
+																			   dismiss();
+																		   }
+																	   } else {
+																		   EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+																		   //Update old.
+																		   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
+																			   client.setReqTime( System.currentTimeMillis() );
+																			   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																																  .toString() );
+
+																			   App.Instance.getApiManager()
+																						   .updateAsync(
+																								   Api.Retrofit.create( Api.class )
+																											   .updateClient( client ),
+																								   client
+																						   );
+
+																			   dismiss();
+																		   }
 																	   }
 																   }
 															   }

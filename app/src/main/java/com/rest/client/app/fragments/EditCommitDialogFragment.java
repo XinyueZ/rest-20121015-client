@@ -19,6 +19,7 @@ import android.widget.EditText;
 import com.rest.client.R;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.EditClientRequest;
 
 public final class EditCommitDialogFragment extends DialogFragment {
 	private EditText mCommentEt;
@@ -27,6 +28,20 @@ public final class EditCommitDialogFragment extends DialogFragment {
 		return (DialogFragment) EditCommitDialogFragment.instantiate(
 				context,
 				EditCommitDialogFragment.class.getName()
+		);
+	}
+
+
+	public static DialogFragment newInstance( Context context, EditClientRequest client ) {
+		Bundle args = new Bundle();
+		args.putSerializable(
+				"client",
+				client
+		);
+		return (DialogFragment) EditCommitDialogFragment.instantiate(
+				context,
+				EditCommitDialogFragment.class.getName(),
+				args
 		);
 	}
 
@@ -47,6 +62,11 @@ public final class EditCommitDialogFragment extends DialogFragment {
 				rightleft,
 				topbottom
 		);
+
+		if( getArguments() != null ) {
+			EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+			mCommentEt.setText( client.getComment() );
+		}
 		return new AlertDialog.Builder( getActivity() ).setTitle( "Comment" )
 													   .setView( mCommentEt )
 													   .setCancelable( true )
@@ -54,18 +74,34 @@ public final class EditCommitDialogFragment extends DialogFragment {
 															   android.R.string.ok,
 															   new DialogInterface.OnClickListener() {
 																   public void onClick( DialogInterface dialog, int whichButton ) {
-																	   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
-																		   Client client = new Client();
-																		   client.setReqId( UUID.randomUUID()
-																								.toString() );
-																		   client.setReqTime( System.currentTimeMillis() );
-																		   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
-																															  .toString() );
+																	   if( getArguments() == null ) {
+																		   //Add new.
+																		   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
+																			   Client client = new Client();
+																			   client.setReqId( UUID.randomUUID()
+																									.toString() );
+																			   client.setReqTime( System.currentTimeMillis() );
+																			   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																																  .toString() );
 
-																		   App.Instance.getFireManager()
-																					   .save( client );
+																			   App.Instance.getFireManager()
+																						   .save( client );
 
-																		   dismiss();
+																			   dismiss();
+																		   }
+																	   } else {
+																		   EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+																		   //Update old.
+																		   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
+																			   client.setReqTime( System.currentTimeMillis() );
+																			   client.setComment( Build.MODEL + "---" + mCommentEt.getText()
+																																  .toString() );
+
+																			   App.Instance.getFireManager()
+																						   .update( client );
+
+																			   dismiss();
+																		   }
 																	   }
 																   }
 															   }
