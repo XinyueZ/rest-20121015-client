@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">RestClient</string>
+    <string name="application_name">RestClient</string>
     <string name="action_settings">Settings</string>
 </resources>
