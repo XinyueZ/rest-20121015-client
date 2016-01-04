@@ -75,7 +75,7 @@ public class Client extends RestObject {
 	}
 
 	@Override
-	public RestObject fromDB( RealmObject dbItem ) {
+	public RestObject newFromDB( RealmObject dbItem ) {
 		ClientDB clientDB = (ClientDB) dbItem;
 		Client   client   = new Client();
 		client.setReqId( clientDB.getReqId() );

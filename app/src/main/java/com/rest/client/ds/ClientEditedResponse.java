@@ -38,32 +38,20 @@ public class ClientEditedResponse extends RestObject {
 
 	@Override
 	public RealmObject[] newInstances( Realm db, int status ) {
-		RealmResults<EditClientRequestDB> dbItems = db.where( EditClientRequestDB.class )
-										   .equalTo(
-												   "reqId",
-												   getReqId()
-										   )
-										   .findAll();
-		EditClientRequestDB editedRequestItem = dbItems.first();
-		editedRequestItem.setStatus( status );
-
 		RealmResults<ClientDB> dbItems2 = db.where( ClientDB.class )
-										   .equalTo(
-												   "reqId",
-												   getReqId()
-										   )
-										   .findAll();
+											.equalTo(
+													"reqId",
+													getReqId()
+											)
+											.findAll();
 		ClientDB dbItem = dbItems2.first();
-		dbItem.setReqId( editedRequestItem.getReqId() );
-		dbItem.setReqTime( editedRequestItem.getReqTime() );
-		dbItem.setComment( editedRequestItem.getComment() );
 		dbItem.setStatus( status );
-		return new RealmObject[] { editedRequestItem, dbItem };
+		return new RealmObject[] { dbItem };
 	}
 
 	@Override
 	public Class<? extends RealmObject> DBType() {
-		return EditClientRequestDB.class;
+		return ClientDB.class;
 	}
 
 

@@ -20,7 +20,7 @@ import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.ds.Client;
-import com.rest.client.ds.EditClientRequest;
+import com.rest.client.ds.ClientEditRequest;
 
 public final class EditCommitDialogFragment2 extends DialogFragment {
 	private EditText mCommentEt;
@@ -33,7 +33,7 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 	}
 
 
-	public static DialogFragment newInstance( Context context, EditClientRequest client ) {
+	public static DialogFragment newInstance( Context context, ClientEditRequest client ) {
 		Bundle args = new Bundle();
 		args.putSerializable(
 				"client",
@@ -65,7 +65,7 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 		);
 
 		if( getArguments() != null ) {
-			EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+			ClientEditRequest client = (ClientEditRequest) getArguments().getSerializable( "client" );
 			mCommentEt.setText( client.getComment() );
 		}
 		return new AlertDialog.Builder( getActivity() ).setTitle( "Comment" )
@@ -94,7 +94,7 @@ public final class EditCommitDialogFragment2 extends DialogFragment {
 																			   dismiss();
 																		   }
 																	   } else {
-																		   EditClientRequest client = (EditClientRequest) getArguments().getSerializable( "client" );
+																		   ClientEditRequest client = (ClientEditRequest) getArguments().getSerializable( "client" );
 																		   //Update old.
 																		   if( !TextUtils.isEmpty( mCommentEt.getText() ) ) {
 																			   client.setReqTime( System.currentTimeMillis() );

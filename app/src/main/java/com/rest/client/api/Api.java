@@ -5,7 +5,7 @@ import com.rest.client.ds.ClientAddedResponse;
 import com.rest.client.ds.ClientDeleteRequest;
 import com.rest.client.ds.ClientDeletedResponse;
 import com.rest.client.ds.ClientEditedResponse;
-import com.rest.client.ds.EditClientRequest;
+import com.rest.client.ds.ClientEditRequest;
 import com.rest.client.ds.RequestForResponse;
 import com.rest.client.ds.Response;
 
@@ -31,5 +31,5 @@ public interface Api {
 	Call<ClientDeletedResponse> deleteClient( @Body ClientDeleteRequest deleteRequest );
 
 	@POST("/update")
-	Call<ClientEditedResponse> updateClient( @Body EditClientRequest editRequest );
+	Call<ClientEditedResponse> updateClient( @Body ClientEditRequest editRequest );
 }

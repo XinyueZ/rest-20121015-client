@@ -9,7 +9,7 @@ import io.realm.Realm;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
 
-public class EditClientRequest extends RestObject {
+public class ClientEditRequest extends RestObject {
 
 	@SerializedName("reqId")
 	@JsonProperty("reqId")
@@ -55,36 +55,28 @@ public class EditClientRequest extends RestObject {
 										   .findAll();
 		ClientDB dbItem = dbItems.first();
 		dbItem.setReqId( getReqId() );
-		if(status == RestObject.UPDATE_SYNCED) {
-			dbItem.setReqTime( getReqTime() );
-			dbItem.setComment( getComment() );
-		}
+		dbItem.setReqTime( getReqTime() );
+		dbItem.setComment( getComment() );
 		dbItem.setStatus( status );
-
-		EditClientRequestDB editedItemDB  = new EditClientRequestDB();
-		editedItemDB.setReqId( getReqId() );
-		editedItemDB.setReqTime( getReqTime() );
-		editedItemDB.setComment( getComment() );
-		editedItemDB.setStatus( status );
-		return new RealmObject[] { editedItemDB , dbItem};
+		return new RealmObject[] { dbItem };
 	}
 
 	@Override
 	public Class<? extends RealmObject> DBType() {
-		return EditClientRequestDB.class;
+		return ClientDB.class;
 	}
 
 	@Override
-	public RestObject fromDB( RealmObject dbItem ) {
-		EditClientRequestDB          clientDB = (EditClientRequestDB) dbItem;
-		EditClientRequest client   = new EditClientRequest();
-		client.setReqId( clientDB.getReqId() );
-		client.setReqTime( clientDB.getReqTime() );
-		client.setComment( clientDB.getComment() );
-		return client;
+	public RestObject newFromDB( RealmObject dbItem ) {
+		ClientDB          clientDB          = (ClientDB) dbItem;
+		ClientEditRequest clientEditRequest = new ClientEditRequest();
+		clientEditRequest.setReqId( clientDB.getReqId() );
+		clientEditRequest.setReqTime( clientDB.getReqTime() );
+		clientEditRequest.setComment( clientDB.getComment() );
+		return clientEditRequest;
 	}
 
-	public EditClientRequest fromClient(Client client) {
+	public ClientEditRequest assignFromClient( Client client ) {
 		setReqId( client.getReqId() );
 		setReqTime( client.getReqTime() );
 		setComment( client.getComment() );

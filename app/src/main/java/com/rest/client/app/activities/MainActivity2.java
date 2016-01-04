@@ -21,7 +21,7 @@ import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.ClientDeleteRequest;
-import com.rest.client.ds.EditClientRequest;
+import com.rest.client.ds.ClientEditRequest;
 import com.rest.client.ds.RequestForResponse;
 
 
@@ -40,7 +40,7 @@ public class MainActivity2 extends BaseActivity {
 		getBinding().getAdapter()
 					.notifyItemChanged( e.getPosition() );
 		ClientDeleteRequest delClient = new ClientDeleteRequest();
-		delClient.setReqId( new Client().fromDB( e.getDBObject() )
+		delClient.setReqId( new Client().newFromDB( e.getDBObject() )
 										.getReqId() );
 		App.Instance.getApiManager()
 					.deleteAsync(
@@ -63,11 +63,12 @@ public class MainActivity2 extends BaseActivity {
 
 		EditCommitDialogFragment2.newInstance(
 				this,
-				new EditClientRequest().fromClient( (Client) new Client().fromDB( e.getDBObject() ) )
-		).show(
-				getSupportFragmentManager(),
-				null
-		);
+				new ClientEditRequest().assignFromClient( (Client) new Client().newFromDB( e.getDBObject() ) )
+		)
+								 .show(
+										 getSupportFragmentManager(),
+										 null
+								 );
 	}
 
 
@@ -153,7 +154,7 @@ public class MainActivity2 extends BaseActivity {
 								@Override
 								public void executePending( List<RestObject> pendingItems ) {
 									for( RestObject object : pendingItems ) {
-										EditClientRequest editClient = (EditClientRequest) object;
+										ClientEditRequest editClient = new ClientEditRequest().assignFromClient( (Client) object );
 										App.Instance.getApiManager()
 													.updateAsync(
 															Api.Retrofit.create( Api.class )
@@ -165,7 +166,7 @@ public class MainActivity2 extends BaseActivity {
 
 								@Override
 								public RestObject build() {
-									return new EditClientRequest();
+									return new Client();
 								}
 							},
 							RestObject.UPDATE

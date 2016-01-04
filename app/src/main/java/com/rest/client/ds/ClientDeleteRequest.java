@@ -48,7 +48,7 @@ public class ClientDeleteRequest extends RestObject {
 	}
 
 	@Override
-	public RestObject fromDB( RealmObject dbItem ) {
+	public RestObject newFromDB( RealmObject dbItem ) {
 		ClientDB clientDB = (ClientDB) dbItem;
 		ClientDeleteRequest   delClient   = new ClientDeleteRequest();
 		delClient.setReqId( clientDB.getReqId() );

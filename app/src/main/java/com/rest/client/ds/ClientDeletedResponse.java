@@ -56,7 +56,7 @@ public class ClientDeletedResponse extends RestObject {
 
 
 	@Override
-	public RestObject fromDB( RealmObject dbItem ) {
+	public RestObject newFromDB( RealmObject dbItem ) {
 		ClientDB clientDB = (ClientDB) dbItem;
 		ClientDeletedResponse   delClient   = new ClientDeletedResponse();
 		delClient.setReqId( clientDB.getReqId() );

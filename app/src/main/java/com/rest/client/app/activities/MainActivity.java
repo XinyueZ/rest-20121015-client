@@ -18,7 +18,7 @@ import com.rest.client.bus.DeleteEvent;
 import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
 import com.rest.client.ds.ClientDB;
-import com.rest.client.ds.EditClientRequest;
+import com.rest.client.ds.ClientEditRequest;
 
 
 public class MainActivity extends BaseActivity {
@@ -36,7 +36,7 @@ public class MainActivity extends BaseActivity {
 		getBinding().getAdapter()
 					.notifyItemChanged( e.getPosition() );
 		App.Instance.getFireManager()
-					.delete( new Client().fromDB( e.getDBObject() ) );
+					.delete( new Client().newFromDB( e.getDBObject() ) );
 	}
 
 
@@ -52,7 +52,7 @@ public class MainActivity extends BaseActivity {
 
 		EditCommitDialogFragment.newInstance(
 				this,
-				new EditClientRequest().fromClient( (Client) new Client().fromDB( e.getDBObject() ) )
+				new ClientEditRequest().assignFromClient( (Client) new Client().newFromDB( e.getDBObject() ) )
 		).show(
 				getSupportFragmentManager(),
 				null
@@ -138,7 +138,7 @@ public class MainActivity extends BaseActivity {
 								@Override
 								public void executePending( List<RestObject> pendingItems ) {
 									for( RestObject object : pendingItems ) {
-										EditClientRequest client = (EditClientRequest) object;
+										ClientEditRequest client = (ClientEditRequest) object;
 										App.Instance.getFireManager()
 													.update( client );
 									}
@@ -146,7 +146,7 @@ public class MainActivity extends BaseActivity {
 
 								@Override
 								public RestObject build() {
-									return new EditClientRequest();
+									return new ClientEditRequest();
 								}
 							},
 							RestObject.UPDATE
