@@ -11,6 +11,8 @@ An example with a rest-package.
 
 5. Dealy post or pushing data when the App online.
 
+6. Inspired by [Android Application Architecture](https://www.youtube.com/watch?v=BlkJzgjzL0c) 
+
 # Tech
 
 1. Use [Realm](http://realm.io) as local database.
