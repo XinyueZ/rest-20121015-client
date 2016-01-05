@@ -49,7 +49,7 @@ public final class Response extends RestObject {
 	}
 
 	@Override
-	public RealmObject[] newInstances( Realm db, int status ) {
+	protected RealmObject[] newInstances( Realm db, int status ) {
 		RealmList<ClientDB> dbRealmList = new RealmList<>();
 		List<Client>        clientList  = getResult();
 		for( Client client : clientList ) {

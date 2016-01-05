@@ -46,7 +46,7 @@ public class ClientEditRequest extends RestObject {
 	}
 
 	@Override
-	public RealmObject[] newInstances( Realm db, int status ) {
+	protected RealmObject[] newInstances( Realm db, int status ) {
 		RealmResults<ClientDB> dbItems = db.where( ClientDB.class )
 										   .equalTo(
 												   "reqId",

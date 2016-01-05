@@ -34,7 +34,7 @@ public class RequestForResponse extends RestObject {
 	}
 
 	@Override
-	public RealmObject[] newInstances( Realm db, int status  ) {
+	protected RealmObject[] newInstances( Realm db, int status  ) {
 		RequestForResponseDB dbItem = new RequestForResponseDB();
 		dbItem.setReqId( getReqId() );
 		dbItem.setReqTime( getReqTime() );

@@ -46,7 +46,7 @@ public class Client extends RestObject {
 	}
 
 	@Override
-	public RealmObject[] newInstances( Realm db, int status ) {
+	protected RealmObject[] newInstances( Realm db, int status ) {
 		ClientDB dbItem;
 		switch( status ) {
 			case DELETE_SYNCED:
