@@ -1,15 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".app.activities.MainActivity">
+    tools:context=".app.activities.MainActivity2">
     <item
-        android:id="@+id/action_api_example"
-        android:orderInCategory="100"
-        android:title="Firebase version demo"
+        android:id="@+id/action_fire_example"
+        android:title="@string/action_fire_demo"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_clear_pending"
-        android:orderInCategory="100"
-        android:title="Clear pending"
+        android:title="@string/action_clear_pending"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_list_photos"
+        android:title="@string/action_show_photos"
         app:showAsAction="never" />
 </menu>

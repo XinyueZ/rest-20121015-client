@@ -180,6 +180,9 @@ public class MainActivity extends BaseActivity {
 			case R.id.action_clear_pending:
 				clearPendings();
 				return true;
+			case R.id.action_list_photos:
+				PhotosActivity.showInstance( this );
+				return true;
 		}
 
 		return super.onOptionsItemSelected( item );

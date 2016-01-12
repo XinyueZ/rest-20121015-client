@@ -81,6 +81,7 @@ public abstract class BaseActivity extends RestfulActivity {
 				"Getting client list...",
 				Snackbar.LENGTH_INDEFINITE
 		);
+		mSnackbar.show();
 	}
 
 
@@ -109,6 +110,7 @@ public abstract class BaseActivity extends RestfulActivity {
 			if( mSnackbar != null && mSnackbar.isShown() ) {
 				mSnackbar.dismiss();
 			}
+			mBinding.loadingPb.setVisibility( View.GONE );
 		}
 	}
 

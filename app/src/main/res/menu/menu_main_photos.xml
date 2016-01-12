@@ -1,0 +1,25 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".app.activities.PhotosActivity">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/action_search"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="always|collapseActionView" />
+
+
+
+    <item
+        android:id="@+id/action_fire_example"
+        android:title="@string/action_fire_demo"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_api_example"
+        android:title="@string/action_api_demo"
+        app:showAsAction="never" />
+
+
+</menu>

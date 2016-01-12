@@ -2,4 +2,12 @@
     <string name="app_name">RestClient</string>
     <string name="application_name">RestClient</string>
     <string name="action_settings">Settings</string>
+    <string name="action_api_demo">API demo</string>
+    <string name="action_fire_demo">Fire demo</string>
+    <string name="action_clear_pending">Clear pending</string>
+    <string name="action_show_photos">Show photos</string>
+    <string name="action_search">Search</string>
+
+
+    <string name="suggestion_auth">com.rest.client.app.SearchSuggestionProvider</string>
 </resources>

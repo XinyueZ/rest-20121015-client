@@ -207,11 +207,14 @@ public class MainActivity2 extends BaseActivity {
 	public boolean onOptionsItemSelected( MenuItem item ) {
 		int id = item.getItemId();
 		switch( id ) {
-			case R.id.action_api_example:
+			case R.id.action_fire_example:
 				MainActivity.showInstance( this );
 				return true;
 			case R.id.action_clear_pending:
 				clearPendings();
+				return true;
+			case R.id.action_list_photos:
+				PhotosActivity.showInstance( this );
 				return true;
 		}
 

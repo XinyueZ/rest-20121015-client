@@ -4,13 +4,16 @@
     tools:context=".app.activities.MainActivity">
     <item
         android:id="@+id/action_api_example"
-        android:orderInCategory="100"
-        android:title="API version demo"
+        android:title="@string/action_api_demo"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_clear_pending"
-        android:orderInCategory="100"
-        android:title="Clear pending"
+        android:title="@string/action_clear_pending"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_list_photos"
+        android:title="@string/action_show_photos"
         app:showAsAction="never" />
 </menu>
