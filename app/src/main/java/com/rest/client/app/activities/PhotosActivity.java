@@ -39,7 +39,7 @@ import io.realm.RealmObject;
 
 
 public class PhotosActivity extends RestfulActivity {
-	private RestFireManager mFireManager;
+	private static RestFireManager sFireMgr;
 
 
 	/**
@@ -94,7 +94,7 @@ public class PhotosActivity extends RestfulActivity {
 
 	@Override
 	protected void loadList() {
-		mFireManager.selectAll( Photo.class );
+		sFireMgr.selectAll( Photo.class );
 	}
 
 
@@ -269,39 +269,41 @@ public class PhotosActivity extends RestfulActivity {
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
-		String      url       = null;
-		String      auth      = null;
-		String      limitLast = null;
-		Properties  prop      = new Properties();
-		InputStream input     = null;
-		try {
+		if( sFireMgr == null) {
+			String      url       = null;
+			String      auth      = null;
+			String      limitLast = null;
+			Properties  prop      = new Properties();
+			InputStream input     = null;
+			try {
 			/*From "resources".*/
-			input = getApplication().getClassLoader()
-									.getResourceAsStream( "firebase2.properties" );
-			if( input != null ) {
-				// load a properties file
-				prop.load( input );
-				url = prop.getProperty( "firebase_url" );
-				auth = prop.getProperty( "firebase_auth" );
-				limitLast = prop.getProperty( "firebase_standard_last_limit" );
-			}
-		} catch( IOException ex ) {
-			ex.printStackTrace();
-		} finally {
-			if( input != null ) {
-				try {
-					input.close();
-				} catch( IOException e ) {
-					e.printStackTrace();
+				input = getApplication().getClassLoader()
+										.getResourceAsStream( "firebase2.properties" );
+				if( input != null ) {
+					// load a properties file
+					prop.load( input );
+					url = prop.getProperty( "firebase_url" );
+					auth = prop.getProperty( "firebase_auth" );
+					limitLast = prop.getProperty( "firebase_standard_last_limit" );
+				}
+			} catch( IOException ex ) {
+				ex.printStackTrace();
+			} finally {
+				if( input != null ) {
+					try {
+						input.close();
+					} catch( IOException e ) {
+						e.printStackTrace();
+					}
 				}
 			}
+			sFireMgr = new RestFireManager(
+					url,
+					auth,
+					Integer.valueOf( limitLast )
+			);
+			sFireMgr.onCreate( getApplication() );
 		}
-		mFireManager = new RestFireManager(
-				url,
-				auth,
-				Integer.valueOf( limitLast )
-		);
-		mFireManager.onCreate( getApplication() );
 
 		super.onCreate( savedInstanceState );
 		mBinding.contentSrl.setColorSchemeResources(
@@ -350,11 +352,5 @@ public class PhotosActivity extends RestfulActivity {
 			doSearch( mKeyword );
 		}
 
-	}
-
-	@Override
-	protected void onDestroy() {
-		mFireManager.onDestroy();
-		super.onDestroy();
 	}
 }
