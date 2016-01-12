@@ -299,8 +299,7 @@ public class PhotosActivity extends RestfulActivity {
 		mFireManager = new RestFireManager(
 				url,
 				auth,
-				Integer.valueOf( limitLast ),
-				"date"
+				Integer.valueOf( limitLast )
 		);
 		mFireManager.onCreate( getApplication() );
 
