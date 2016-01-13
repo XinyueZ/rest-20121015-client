@@ -80,8 +80,8 @@ public class MainActivity extends BaseActivity {
 	}
 
 	@Override
-	protected void buildRestUI() {
-		super.buildRestUI();
+	protected void buildViews() {
+		super.buildViews();
 		onRestApiSuccess();
 	}
 

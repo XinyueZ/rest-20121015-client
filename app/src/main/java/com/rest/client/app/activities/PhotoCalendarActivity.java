@@ -71,7 +71,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 		mBinding.getAdapter()
 				.setData( null );
-		initRestUI();
+		queryLocalData();
 		loadPhotoList(
 				e.getYear(),
 				e.getMonth(),
@@ -179,10 +179,10 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 
 	@Override
-	protected void initRestUI() {
+	protected void queryLocalData() {
 		mBinding.loadingPb.setVisibility( View.VISIBLE );
 		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		super.initRestUI();
+		super.queryLocalData();
 	}
 
 
@@ -197,7 +197,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	}
 
 	@Override
-	protected void buildRestUI() {
+	protected void buildViews() {
 		if( isDataLoaded() ) {
 			if( mBinding.getAdapter() == null ) {
 				mBinding.setAdapter( new PhotoListAdapter() );
