@@ -284,7 +284,7 @@ public class PhotosActivity extends RestfulActivity {
 					prop.load( input );
 					url = prop.getProperty( "firebase_url" );
 					auth = prop.getProperty( "firebase_auth" );
-					limitLast = prop.getProperty( "firebase_standard_last_limit" );
+					limitLast = prop.getProperty( "firebase_standard_limit" );
 				}
 			} catch( IOException ex ) {
 				ex.printStackTrace();
