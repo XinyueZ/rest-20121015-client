@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.provider.SearchRecentSuggestions;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.util.ArrayMap;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.LinearLayoutManager;
@@ -36,6 +35,7 @@ import com.rest.client.ds.Photo;
 import com.rest.client.ds.PhotoDB;
 
 import io.realm.RealmObject;
+import io.realm.RealmQuery;
 
 
 public class PhotosActivity extends RestfulActivity {
@@ -130,16 +130,7 @@ public class PhotosActivity extends RestfulActivity {
 
 
 	@Override
-	protected void initRestUI( ArrayMap<String, String> contains) {
-		mBinding.loadingPb.setVisibility( View.VISIBLE );
-		mBinding.responsesRv.setLayoutManager( new LinearLayoutManager( this ) );
-		super.initRestUI(contains);
-	}
-
-
-	@Override
 	protected void buildRestUI() {
-		mBinding.contentSrl.setRefreshing( false );
 		if( isDataLoaded() ) {
 			if( mBinding.getAdapter() == null ) {
 				mBinding.setAdapter( new PhotoListAdapter() );
@@ -154,8 +145,10 @@ public class PhotosActivity extends RestfulActivity {
 			if( mSnackbar != null && mSnackbar.isShown() ) {
 				mSnackbar.dismiss();
 			}
-			mBinding.loadingPb.setVisibility( View.GONE );
 		}
+
+		mBinding.contentSrl.setRefreshing( false );
+		mBinding.loadingPb.setVisibility( View.GONE );
 	}
 
 	protected Class<? extends RealmObject> getDataClazz() {
@@ -168,7 +161,7 @@ public class PhotosActivity extends RestfulActivity {
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu ) {
 		getMenuInflater().inflate(
-				R.menu.menu_main_photos,
+				R.menu.menu_photos,
 				menu
 		);
 
@@ -185,7 +178,7 @@ public class PhotosActivity extends RestfulActivity {
 					@Override
 					public boolean onMenuItemActionCollapse( MenuItem item ) {
 						mKeyword = "";
-						doSearch(mKeyword);
+						doSearch();
 						return true;
 					}
 				}
@@ -195,7 +188,8 @@ public class PhotosActivity extends RestfulActivity {
 			@Override
 			public boolean onQueryTextChange( String newText ) {
 				if( TextUtils.isEmpty( newText ) ) {
-					doSearch(newText);
+					mKeyword = null;
+					doSearch();
 				}
 				return false;
 			}
@@ -232,21 +226,21 @@ public class PhotosActivity extends RestfulActivity {
 
 
 	/**
-	 * Search a location.
+	 * Search for a photo.
 	 */
-	private void doSearch( String search ) {
+	private void doSearch() {
 		mBinding.getAdapter()
 				.setData( null );
-		getData().removeChangeListeners();
-		if( !TextUtils.isEmpty( search ) ) {
-			ArrayMap<String, String> contains = new ArrayMap<>();
-			contains.put(
+		initRestUI();
+	}
+
+	@Override
+	protected void buildQuery( RealmQuery<? extends RealmObject> q ) {
+		if( !TextUtils.isEmpty( mKeyword ) ) {
+			q.contains(
 					"description",
-					search
+					mKeyword
 			);
-			initRestUI( contains );
-		} else {
-			initRestUI();
 		}
 	}
 
@@ -261,6 +255,10 @@ public class PhotosActivity extends RestfulActivity {
 			case R.id.action_api_example:
 				MainActivity2.showInstance( this );
 				return true;
+
+			case R.id.action_photo_calendar:
+				PhotoCalendarActivity.showInstance( this );
+				return true;
 		}
 
 		return super.onOptionsItemSelected( item );
@@ -269,7 +267,7 @@ public class PhotosActivity extends RestfulActivity {
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
-		if( sFireMgr == null) {
+		if( sFireMgr == null ) {
 			String      url       = null;
 			String      auth      = null;
 			String      limitLast = null;
@@ -349,7 +347,7 @@ public class PhotosActivity extends RestfulActivity {
 			);
 
 			//Move map to searched location.
-			doSearch( mKeyword );
+			doSearch();
 		}
 
 	}

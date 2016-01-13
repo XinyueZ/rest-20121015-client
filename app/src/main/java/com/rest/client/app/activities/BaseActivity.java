@@ -95,7 +95,6 @@ public abstract class BaseActivity extends RestfulActivity {
 
 	@Override
 	protected void buildRestUI() {
-		mBinding.contentSrl.setRefreshing( false );
 		if( isDataLoaded() ) {
 			if( mBinding.getAdapter() == null ) {
 				mBinding.setAdapter( new ListAdapter<ClientDB>() );
@@ -110,12 +109,18 @@ public abstract class BaseActivity extends RestfulActivity {
 			if( mSnackbar != null && mSnackbar.isShown() ) {
 				mSnackbar.dismiss();
 			}
-			mBinding.loadingPb.setVisibility( View.GONE );
 		}
 	}
 
 	protected Class<? extends RealmObject> getDataClazz() {
 		return ClientDB.class;
+	}
+
+
+	@Override
+	protected void onRestApiSuccess() {
+		mBinding.contentSrl.setRefreshing( false );
+		mBinding.loadingPb.setVisibility( View.GONE );
 	}
 
 	//onNetworkConnected() ignored.

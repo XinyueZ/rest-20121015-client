@@ -6,6 +6,7 @@
     <string name="action_fire_demo">Fire demo</string>
     <string name="action_clear_pending">Clear pending</string>
     <string name="action_show_photos">Show photos</string>
+    <string name="action_photo_calendar">Photo calendar</string>
     <string name="action_search">Search</string>
 
 

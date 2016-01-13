@@ -1,23 +1,26 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".app.activities.MainActivity2">
+    tools:context=".app.activities.PhotosActivity">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/action_search"
+        app:showAsAction="always" />
+
+
     <item
         android:id="@+id/action_fire_example"
         android:title="@string/action_fire_demo"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_clear_pending"
-        android:title="@string/action_clear_pending"
+        android:id="@+id/action_api_example"
+        android:title="@string/action_api_demo"
         app:showAsAction="never" />
-
     <item
         android:id="@+id/action_list_photos"
         android:title="@string/action_show_photos"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/action_photo_calendar"
-        android:title="@string/action_photo_calendar"
-        app:showAsAction="never" />
 </menu>

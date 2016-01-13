@@ -11,7 +11,6 @@
         app:showAsAction="always|collapseActionView" />
 
 
-
     <item
         android:id="@+id/action_fire_example"
         android:title="@string/action_fire_demo"
@@ -20,6 +19,9 @@
         android:id="@+id/action_api_example"
         android:title="@string/action_api_demo"
         app:showAsAction="never" />
-
+    <item
+        android:id="@+id/action_photo_calendar"
+        android:title="@string/action_photo_calendar"
+        app:showAsAction="never" />
 
 </menu>

@@ -216,6 +216,8 @@ public class MainActivity2 extends BaseActivity {
 			case R.id.action_list_photos:
 				PhotosActivity.showInstance( this );
 				return true;
+			case R.id.action_photo_calendar:
+				PhotoCalendarActivity.showInstance( this );
 		}
 
 		return super.onOptionsItemSelected( item );

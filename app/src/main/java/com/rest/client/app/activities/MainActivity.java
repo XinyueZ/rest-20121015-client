@@ -79,6 +79,11 @@ public class MainActivity extends BaseActivity {
 		);
 	}
 
+	@Override
+	protected void buildRestUI() {
+		super.buildRestUI();
+		onRestApiSuccess();
+	}
 
 	@Override
 	protected void loadList() {
@@ -183,6 +188,8 @@ public class MainActivity extends BaseActivity {
 			case R.id.action_list_photos:
 				PhotosActivity.showInstance( this );
 				return true;
+			case R.id.action_photo_calendar:
+				PhotoCalendarActivity.showInstance( this );
 		}
 
 		return super.onOptionsItemSelected( item );

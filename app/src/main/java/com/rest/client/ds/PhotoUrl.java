@@ -59,12 +59,12 @@ public final class PhotoUrl extends RestObject {
 	@NonNull
 	@Override
 	protected RealmObject[] newInstances( Realm db, int status ) {
-		PhotoUrlDB dbItem = new PhotoUrlDB();
-		dbItem.setReqId( getReqId() );
-		dbItem.setHd( getHd() );
-		dbItem.setNormal( getNormal() );
-		dbItem.setStatus( status );
-		return new RealmObject[] { dbItem };
+		PhotoUrlDB dbPayload = new PhotoUrlDB();
+		dbPayload.setReqId( getReqId() );
+		dbPayload.setHd( getHd() );
+		dbPayload.setNormal( getNormal() );
+		dbPayload.setStatus( status );
+		return new RealmObject[] { dbPayload };
 	}
 
 	@Override
@@ -74,11 +74,11 @@ public final class PhotoUrl extends RestObject {
 
 	@Override
 	public RestObject newFromDB( RealmObject dbItem ) {
-		PhotoUrlDB urlDB = (PhotoUrlDB) dbItem;
+		PhotoUrlDB dbPayLoad = (PhotoUrlDB) dbItem;
 		PhotoUrl   url   = new PhotoUrl();
-		url.setReqId( urlDB.getReqId() );
-		url.setHd( urlDB.getHd() );
-		url.setNormal( urlDB.getNormal() );
+		url.setReqId( dbPayLoad.getReqId() );
+		url.setHd( dbPayLoad.getHd() );
+		url.setNormal( dbPayLoad.getNormal() );
 		return url;
 	}
 }

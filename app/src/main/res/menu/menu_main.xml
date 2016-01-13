@@ -16,4 +16,9 @@
         android:id="@+id/action_list_photos"
         android:title="@string/action_show_photos"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_photo_calendar"
+        android:title="@string/action_photo_calendar"
+        app:showAsAction="never" />
 </menu>

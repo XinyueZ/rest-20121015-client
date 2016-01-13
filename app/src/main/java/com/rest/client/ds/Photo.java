@@ -86,8 +86,8 @@ public final class Photo extends RestObject {
 
 	@Override
 	protected RealmObject[] newInstances( Realm db, int status ) {
-		PhotoDB    photoDB;
-		PhotoUrlDB photoUrlDB;
+		PhotoDB    photoDbPayload;
+		PhotoUrlDB photoUrlDbPayload;
 
 		switch( status ) {
 			case DELETE_SYNCED:
@@ -97,29 +97,29 @@ public final class Photo extends RestObject {
 																		getReqId()
 																)
 																.findAll();
-				photoDB = (PhotoDB) dbItems.first();
+				photoDbPayload = (PhotoDB) dbItems.first();
 				break;
 			default:
-				photoUrlDB = new PhotoUrlDB();
-				photoUrlDB.setReqId( getReqId() );
-				photoUrlDB.setReqTime( System.currentTimeMillis() );
-				photoUrlDB.setStatus( status );
-				photoUrlDB.setHd( getPhotoUrl().getHd() );
-				photoUrlDB.setNormal( getPhotoUrl().getNormal() );
+				photoUrlDbPayload = new PhotoUrlDB();
+				photoUrlDbPayload.setReqId( getReqId() );
+				photoUrlDbPayload.setReqTime( System.currentTimeMillis() );
+				photoUrlDbPayload.setStatus( status );
+				photoUrlDbPayload.setHd( getPhotoUrl().getHd() );
+				photoUrlDbPayload.setNormal( getPhotoUrl().getNormal() );
 
 
-				photoDB = new PhotoDB();
-				photoDB.setReqId( getReqId() );
-				photoDB.setReqTime( System.currentTimeMillis() );
-				photoDB.setStatus( status );
-				photoDB.setTitle( getTitle() );
-				photoDB.setDescription( getDescription() );
-				photoDB.setDate( getDate() );
-				photoDB.setUrls( photoUrlDB );
-				photoDB.setType( getType() );
+				photoDbPayload = new PhotoDB();
+				photoDbPayload.setReqId( getReqId() );
+				photoDbPayload.setReqTime( System.currentTimeMillis() );
+				photoDbPayload.setStatus( status );
+				photoDbPayload.setTitle( getTitle() );
+				photoDbPayload.setDescription( getDescription() );
+				photoDbPayload.setDate( getDate() );
+				photoDbPayload.setUrls( photoUrlDbPayload );
+				photoDbPayload.setType( getType() );
 				break;
 		}
-		return new RealmObject[] { photoDB };
+		return new RealmObject[] { photoDbPayload };
 	}
 
 	@Override
@@ -129,20 +129,20 @@ public final class Photo extends RestObject {
 
 	@Override
 	public RestObject newFromDB( RealmObject dbItem ) {
-		PhotoDB photoDB = (PhotoDB) dbItem;
+		PhotoDB photoDbPayload = (PhotoDB) dbItem;
 		Photo   photo   = new Photo();
-		photo.setReqId( photoDB.getReqId() );
-		photo.setDate( photoDB.getDate() );
-		photo.setType( photoDB.getType() );
-		photo.setTitle( photoDB.getTitle() );
-		photo.setDescription( photoDB.getDescription() );
+		photo.setReqId( photoDbPayload.getReqId() );
+		photo.setDate( photoDbPayload.getDate() );
+		photo.setType( photoDbPayload.getType() );
+		photo.setTitle( photoDbPayload.getTitle() );
+		photo.setDescription( photoDbPayload.getDescription() );
 
 		PhotoUrl photoUrl = new PhotoUrl();
-		photoUrl.setReqId( photoDB.getUrls()
+		photoUrl.setReqId( photoDbPayload.getUrls()
 								  .getReqId() );
-		photoUrl.setHd( photoDB.getUrls()
+		photoUrl.setHd( photoDbPayload.getUrls()
 							   .getHd() );
-		photoUrl.setNormal( photoDB.getUrls()
+		photoUrl.setNormal( photoDbPayload.getUrls()
 								   .getNormal() );
 		photo.setPhotoUrl( photoUrl );
 		return photo;
