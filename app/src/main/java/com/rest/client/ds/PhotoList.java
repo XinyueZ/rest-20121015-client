@@ -10,6 +10,7 @@ import com.google.gson.annotations.SerializedName;
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.RealmObject;
+import io.realm.RealmResults;
 
 public final class PhotoList extends RestObject {
 	@JsonProperty("status")
@@ -78,15 +79,30 @@ public final class PhotoList extends RestObject {
 		photoListDB.setResult( photoDBList );
 		photoListDB.setReqTime( System.currentTimeMillis() );
 
-		//Update request
-//		RealmResults<RequestForResponseDB> reqItemDbs = db.where( RequestForResponseDB.class )
-//														  .equalTo(
-//																  "reqId",
-//																  getReqId()
-//														  )
-//														  .findAll();
-//		RequestForResponseDB reqItemDb = reqItemDbs.first();
-//		reqItemDb.setStatus( status );
+		//Update requests
+		RealmResults<RequestPhotoListDB> listRequestDBs = db.where( RequestPhotoListDB.class )
+														  .equalTo(
+																  "reqId",
+																  getReqId()
+														  )
+														  .findAll();
+		if(listRequestDBs.size() > 0) {
+			RequestPhotoListDB reqItemDb = listRequestDBs.first();
+			reqItemDb.setStatus( status );
+		}
+
+		RealmResults<RequestPhotoLastThreeListDB> lastThreeReqDBs = db.where( RequestPhotoLastThreeListDB.class )
+															.equalTo(
+																	"reqId",
+																	getReqId()
+															)
+															.findAll();
+		if(lastThreeReqDBs.size() > 0) {
+			RequestPhotoLastThreeListDB reqItemDb = lastThreeReqDBs.first();
+			reqItemDb.setStatus( status );
+		}
+
+
 		return new RealmObject[] { photoListDB ,
 								   //reqItemDb
 		};

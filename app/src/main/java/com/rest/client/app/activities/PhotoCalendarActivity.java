@@ -24,10 +24,12 @@ import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
 import com.rest.client.app.adapters.PhotoListAdapter;
-import com.rest.client.app.fragments.YearMonthDialogFragment;
-import com.rest.client.bus.SelectYearMonthEvent;
+import com.rest.client.app.fragments.InputDateDialogFragment;
+import com.rest.client.app.noactivities.AppGuardService3;
+import com.rest.client.bus.SelectDateTime;
 import com.rest.client.databinding.PhotosBinding;
 import com.rest.client.ds.PhotoDB;
+import com.rest.client.ds.RequestPhotoLastThreeList;
 import com.rest.client.ds.RequestPhotoList;
 
 import io.realm.RealmObject;
@@ -50,19 +52,23 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	 */
 	private Snackbar mSnackbar;
 
+	private int mQueryType;
+
 	private String mKeyword = null;
+
 
 	//------------------------------------------------
 	//Subscribes, event-handlers
 	//------------------------------------------------
 
 	/**
-	 * Handler for {@link SelectYearMonthEvent}.
+	 * Handler for {@link SelectDateTime}.
 	 *
 	 * @param e
-	 * 		Event {@link SelectYearMonthEvent}.
+	 * 		Event {@link SelectDateTime}.
 	 */
-	public void onEvent( SelectYearMonthEvent e ) {
+	public void onEvent( SelectDateTime e ) {
+		mQueryType = e.getQueryType();
 		mKeyword = String.format(
 				"%d-%d-",
 				e.getYear(),
@@ -75,8 +81,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 		loadPhotoList(
 				e.getYear(),
 				e.getMonth(),
-				Calendar.getInstance().getTimeZone()
-						.getID()
+				e.getTimeZone()
 		);
 	}
 
@@ -108,7 +113,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 		int      year     = calendar.get( Calendar.YEAR );
 		int      month    = calendar.get( Calendar.MONTH ) + 1;
 		String timeZone = calendar.getTimeZone()
-							   .getID();
+								  .getID();
 
 		loadPhotoList(
 				year,
@@ -118,18 +123,34 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	}
 
 	private void loadPhotoList( int year, int month, String timeZone ) {
-		RequestPhotoList requestPhotoList = new RequestPhotoList();
-		requestPhotoList.setReqId( UUID.randomUUID()
-									   .toString() );
-		requestPhotoList.setYear( year );
-		requestPhotoList.setMonth( month );
-		requestPhotoList.setTimeZone( timeZone );
-		App.Instance.getApiManager()
-					.execAsync(
-							Api.RetrofitPhoto.create( Api.class )
-											 .getPhotoMonthList( requestPhotoList ),
-							requestPhotoList
-					);
+		switch( mQueryType ) {
+			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
+				RequestPhotoList requestPhotoList = new RequestPhotoList();
+				requestPhotoList.setReqId( UUID.randomUUID()
+											   .toString() );
+				requestPhotoList.setYear( year );
+				requestPhotoList.setMonth( month );
+				requestPhotoList.setTimeZone( timeZone );
+				App.Instance.getApiManager()
+							.execAsync(
+									AppGuardService3.RetrofitPhoto.create( Api.class )
+																  .getPhotoMonthList( requestPhotoList ),
+									requestPhotoList
+							);
+				break;
+			case InputDateDialogFragment.QUERY_LAST_THREE_DAYS:
+				RequestPhotoLastThreeList requestPhotoLastThreeList = new RequestPhotoLastThreeList();
+				requestPhotoLastThreeList.setReqId( UUID.randomUUID()
+											   .toString() );
+				requestPhotoLastThreeList.setTimeZone( timeZone );
+				App.Instance.getApiManager()
+							.execAsync(
+									AppGuardService3.RetrofitPhoto.create( Api.class )
+													 .getLastThreeList( requestPhotoLastThreeList ),
+									requestPhotoLastThreeList
+							);
+				break;
+		}
 	}
 
 
@@ -144,7 +165,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 										RequestPhotoList requestPhotoList = (RequestPhotoList) object;
 										App.Instance.getApiManager()
 													.execAsync(
-															Api.RetrofitPhoto.create( Api.class )
+															AppGuardService3.RetrofitPhoto.create( Api.class )
 																			 .getPhotoMonthList( requestPhotoList ),
 															requestPhotoList
 													);
@@ -188,11 +209,45 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 	@Override
 	protected void buildQuery( RealmQuery<? extends RealmObject> q ) {
-		if( !TextUtils.isEmpty( mKeyword ) ) {
-			q.contains(
-					"date",
-					mKeyword
-			);
+		switch( mQueryType ) {
+			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
+				if( !TextUtils.isEmpty( mKeyword ) ) {
+					q.contains(
+							"date",
+							mKeyword
+					);
+				}
+				break;
+			case InputDateDialogFragment.QUERY_LAST_THREE_DAYS:
+				Calendar calendar = Calendar.getInstance();
+				int year = calendar.get( Calendar.YEAR );
+				int month = calendar.get( Calendar.MONTH ) + 1;
+				int day = calendar.get( Calendar.DAY_OF_MONTH );
+				q.equalTo(
+						"date",
+						year + "-" + month + "-" + day
+				)
+				 .or();
+				calendar.add( Calendar.DAY_OF_MONTH,
+							  -1 );
+				year = calendar.get( Calendar.YEAR );
+				month = calendar.get( Calendar.MONTH ) + 1;
+				day = calendar.get( Calendar.DAY_OF_MONTH );
+				q.equalTo(
+						"date",
+						year + "-" + month + "-" + day
+				)
+				 .or();
+				calendar.add( Calendar.DAY_OF_MONTH,
+							  -1 );
+				year = calendar.get( Calendar.YEAR );
+				month = calendar.get( Calendar.MONTH ) + 1;
+				day = calendar.get( Calendar.DAY_OF_MONTH );
+				q.equalTo(
+						"date",
+						year + "-" + month + "-" + day
+				);
+				break;
 		}
 	}
 
@@ -253,7 +308,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 				PhotosActivity.showInstance( this );
 				return true;
 			case R.id.action_search:
-				YearMonthDialogFragment.newInstance( this )
+				InputDateDialogFragment.newInstance( this )
 									   .show(
 											   getSupportFragmentManager(),
 											   null
@@ -267,6 +322,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
+		mQueryType = InputDateDialogFragment.QUERY_SINGLE_MONTH;
 		Calendar calendar = Calendar.getInstance();
 		int      year     = calendar.get( Calendar.YEAR );
 		int      month    = calendar.get( Calendar.MONTH ) + 1;

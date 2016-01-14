@@ -34,4 +34,9 @@
         <item name="cardUseCompatPadding">true</item>
         <item name="cardCornerRadius">1dp</item>
     </style>
+
+    <style name="inputDateText">
+        <item name="android:inputType">numberSigned</item>
+        <item name="android:text">0</item>
+    </style>
 </resources>

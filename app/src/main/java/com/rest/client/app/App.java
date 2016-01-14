@@ -45,6 +45,7 @@ import com.rest.client.app.noactivities.AppGuardService2;
 import com.chopping.rest.RestApiManager;
 import com.chopping.rest.RestFireManager;
 import com.chopping.utils.RestUtils;
+import com.rest.client.app.noactivities.AppGuardService3;
 
 
 /**
@@ -132,6 +133,19 @@ public final class App extends MultiDexApplication {
 
 		tag = ( System.currentTimeMillis() + 1 ) + "";
 		scheduleTask = new PeriodicTask.Builder().setService( AppGuardService2.class )
+												 .setPeriod( scheduleSec )
+												 .setFlex( flexSecs )
+												 .setTag( tag )
+												 .setPersisted( true )
+												 .setRequiredNetwork( com.google.android.gms.gcm.Task.NETWORK_STATE_ANY )
+												 .setRequiresCharging( false )
+												 .build();
+		GcmNetworkManager.getInstance( cxt )
+						 .schedule( scheduleTask );
+
+
+		tag = ( System.currentTimeMillis() + 2 ) + "";
+		scheduleTask = new PeriodicTask.Builder().setService( AppGuardService3.class )
 												 .setPeriod( scheduleSec )
 												 .setFlex( flexSecs )
 												 .setTag( tag )

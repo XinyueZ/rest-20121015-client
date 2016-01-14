@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">RestClient</string>
     <string name="application_name">RestClient</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_api_demo">API demo</string>
     <string name="action_fire_demo">Fire demo</string>
@@ -9,6 +10,18 @@
     <string name="action_photo_calendar">Photo calendar</string>
     <string name="action_search">Search</string>
 
+    <string name="lbl_year">Year</string>
+    <string name="lbl_month">Month</string>
+    <string name="lbl_day">Day</string>
+    <string name="lbl_last_three_days">Last 3 days</string>
+    <string name="lbl_single_month">Single month</string>
+    <string name="lbl_single_day">One day</string>
+    <string name="lbl_invalid_year">Invalid year, input year after 1997.</string>
+    <string name="lbl_invalid_date">Invalid date, input between 1 and 31.</string>
+
+    <string name="title_query_date">Query date</string>
+
+    <string name="btn_query">Query</string>
 
     <string name="suggestion_auth">com.rest.client.app.SearchSuggestionProvider</string>
 </resources>
