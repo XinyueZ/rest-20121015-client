@@ -1,5 +1,6 @@
 package com.rest.client.app.activities;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,7 @@ import com.rest.client.app.noactivities.AppGuardService3;
 import com.rest.client.bus.SelectDateTime;
 import com.rest.client.databinding.PhotosBinding;
 import com.rest.client.ds.PhotoDB;
+import com.rest.client.ds.RequestPhotoDayList;
 import com.rest.client.ds.RequestPhotoLastThreeList;
 import com.rest.client.ds.RequestPhotoList;
 
@@ -69,11 +71,24 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	 */
 	public void onEvent( SelectDateTime e ) {
 		mQueryType = e.getQueryType();
-		mKeyword = String.format(
-				"%d-%d-",
-				e.getYear(),
-				e.getMonth()
-		);
+		switch( mQueryType ) {
+			case InputDateDialogFragment.QUERY_DAY:
+				mKeyword = String.format(
+						"%d-%d-%d",
+						e.getYear(),
+						e.getMonth(),
+						e.getDay()
+				);
+				break;
+			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
+				mKeyword = String.format(
+						"%d-%d-",
+						e.getYear(),
+						e.getMonth()
+				);
+				break;
+		}
+
 
 		mBinding.getAdapter()
 				.setData( null );
@@ -122,8 +137,23 @@ public class PhotoCalendarActivity extends RestfulActivity {
 		);
 	}
 
-	private void loadPhotoList( int year, int month, String timeZone ) {
+	private void loadPhotoList( int year, int month,  String timeZone ) {
 		switch( mQueryType ) {
+			case InputDateDialogFragment.QUERY_DAY:
+				RequestPhotoDayList requestPhotoDayList = new RequestPhotoDayList();
+				requestPhotoDayList.setReqId( UUID.randomUUID()
+												  .toString() );
+				List<String> datetimes = new ArrayList<>();
+				datetimes.add( mKeyword );
+				requestPhotoDayList.setDateTimes( datetimes );
+				requestPhotoDayList.setTimeZone( timeZone );
+				App.Instance.getApiManager()
+							.execAsync(
+									AppGuardService3.RetrofitPhoto.create( Api.class )
+																  .getPhotoList( requestPhotoDayList ),
+									requestPhotoDayList
+							);
+				break;
 			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
 				RequestPhotoList requestPhotoList = new RequestPhotoList();
 				requestPhotoList.setReqId( UUID.randomUUID()
@@ -141,12 +171,12 @@ public class PhotoCalendarActivity extends RestfulActivity {
 			case InputDateDialogFragment.QUERY_LAST_THREE_DAYS:
 				RequestPhotoLastThreeList requestPhotoLastThreeList = new RequestPhotoLastThreeList();
 				requestPhotoLastThreeList.setReqId( UUID.randomUUID()
-											   .toString() );
+														.toString() );
 				requestPhotoLastThreeList.setTimeZone( timeZone );
 				App.Instance.getApiManager()
 							.execAsync(
 									AppGuardService3.RetrofitPhoto.create( Api.class )
-													 .getLastThreeList( requestPhotoLastThreeList ),
+																  .getPhotoLastThreeList( requestPhotoLastThreeList ),
 									requestPhotoLastThreeList
 							);
 				break;
@@ -166,7 +196,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 										App.Instance.getApiManager()
 													.execAsync(
 															AppGuardService3.RetrofitPhoto.create( Api.class )
-																			 .getPhotoMonthList( requestPhotoList ),
+																						  .getPhotoMonthList( requestPhotoList ),
 															requestPhotoList
 													);
 									}
@@ -210,6 +240,14 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	@Override
 	protected void buildQuery( RealmQuery<? extends RealmObject> q ) {
 		switch( mQueryType ) {
+			case InputDateDialogFragment.QUERY_DAY:
+				if( !TextUtils.isEmpty( mKeyword ) ) {
+					q.equalTo(
+							"date",
+							mKeyword
+					);
+				}
+				break;
 			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
 				if( !TextUtils.isEmpty( mKeyword ) ) {
 					q.contains(
@@ -228,8 +266,10 @@ public class PhotoCalendarActivity extends RestfulActivity {
 						year + "-" + month + "-" + day
 				)
 				 .or();
-				calendar.add( Calendar.DAY_OF_MONTH,
-							  -1 );
+				calendar.add(
+						Calendar.DAY_OF_MONTH,
+						-1
+				);
 				year = calendar.get( Calendar.YEAR );
 				month = calendar.get( Calendar.MONTH ) + 1;
 				day = calendar.get( Calendar.DAY_OF_MONTH );
@@ -238,8 +278,10 @@ public class PhotoCalendarActivity extends RestfulActivity {
 						year + "-" + month + "-" + day
 				)
 				 .or();
-				calendar.add( Calendar.DAY_OF_MONTH,
-							  -1 );
+				calendar.add(
+						Calendar.DAY_OF_MONTH,
+						-1
+				);
 				year = calendar.get( Calendar.YEAR );
 				month = calendar.get( Calendar.MONTH ) + 1;
 				day = calendar.get( Calendar.DAY_OF_MONTH );

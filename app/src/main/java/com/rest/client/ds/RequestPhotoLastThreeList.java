@@ -54,13 +54,14 @@ public final class RequestPhotoLastThreeList extends RestObject {
 		RequestPhotoListDB dbPayLoad = new RequestPhotoListDB();
 		dbPayLoad.setReqId( getReqId() );
 		dbPayLoad.setTimeZone( getTimeZone() );
+		dbPayLoad.setStatus( status );
 		return new RealmObject[] { dbPayLoad };
 	}
 
 
 	@Override
 	public RestObject newFromDB( RealmObject dbItem ) {
-		RequestPhotoListDB        dbPayLoad        = (RequestPhotoListDB) dbItem;
+		RequestPhotoLastThreeListDB        dbPayLoad        = (RequestPhotoLastThreeListDB) dbItem;
 		RequestPhotoLastThreeList requestPhotoList = new RequestPhotoLastThreeList();
 		requestPhotoList.setReqId( dbPayLoad.getReqId() );
 		requestPhotoList.setTimeZone( dbPayLoad.getTimeZone() );

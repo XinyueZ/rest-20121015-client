@@ -94,7 +94,7 @@ public final class InputDateDialogFragment extends DialogFragment implements OnC
 	}
 
 	private void query() {
-		boolean ok;
+		boolean ok = true;
 		if( mBinding.dateRb.isChecked() ) {
 			int year = Integer.valueOf( mBinding.singleYearEt.getText()
 															 .toString() );
@@ -110,28 +110,30 @@ public final class InputDateDialogFragment extends DialogFragment implements OnC
 															   .toString() );
 			if( !validateDate( month ) ) {
 				mBinding.singleMonthEtTil.setError( getString( R.string.lbl_invalid_date ) );
-				ok = false;
+				ok = ok && false;
 			} else {
 				mBinding.singleMonthEtTil.setErrorEnabled( false );
-				ok = true;
+				ok = ok && true;
 			}
 
 			int day = Integer.valueOf( mBinding.singleDayEt.getText()
 														   .toString() );
 			if( !validateDate( day ) ) {
 				mBinding.singleDayEtTil.setError( getString( R.string.lbl_invalid_date ) );
-				ok = false;
+				ok = ok && false;
 			} else {
 				mBinding.singleDayEtTil.setErrorEnabled( false );
-				ok = true;
+				ok = ok && true;
 			}
-			//			EventBus.getDefault()
-			//					.post( new SelectDateTime(
-			//							year,
-			//							month,
-			//							day
-			//					) );
+
 			if( ok ) {
+				EventBus.getDefault()
+						.post( new SelectDateTime(
+								QUERY_DAY,
+								year,
+								month,
+								day
+						) );
 				dismiss();
 			}
 		} else if( mBinding.monthRb.isChecked() ) {
@@ -139,20 +141,20 @@ public final class InputDateDialogFragment extends DialogFragment implements OnC
 													   .toString() );
 			if( !validateYear( year ) ) {
 				mBinding.yearEtTil.setError( getString( R.string.lbl_invalid_year ) );
-				ok = false;
+				ok = ok && false;
 			} else {
 				mBinding.yearEtTil.setErrorEnabled( false );
-				ok = true;
+				ok = ok && true;
 			}
 
 			int month = Integer.valueOf( mBinding.monthEt.getText()
 														 .toString() );
 			if( !validateDate( month ) ) {
 				mBinding.monthEtTil.setError( getString( R.string.lbl_invalid_date ) );
-				ok = false;
+				ok = ok && false;
 			} else {
 				mBinding.monthEtTil.setErrorEnabled( false );
-				ok = true;
+				ok = ok && true;
 			}
 
 			if( ok ) {
@@ -166,7 +168,7 @@ public final class InputDateDialogFragment extends DialogFragment implements OnC
 			}
 		} else if( mBinding.lastThreeRb.isChecked() ) {
 			EventBus.getDefault()
-					.post( new SelectDateTime(QUERY_LAST_THREE_DAYS) );
+					.post( new SelectDateTime( QUERY_LAST_THREE_DAYS ) );
 			dismiss();
 		} else if( !mBinding.dateRb.isChecked() && !mBinding.monthRb.isChecked() && !mBinding.lastThreeRb.isChecked() ) {
 			dismiss();

@@ -8,6 +8,7 @@ import com.rest.client.ds.ClientEditRequest;
 import com.rest.client.ds.ClientEditedResponse;
 import com.rest.client.ds.PhotoList;
 import com.rest.client.ds.RequestForResponse;
+import com.rest.client.ds.RequestPhotoDayList;
 import com.rest.client.ds.RequestPhotoLastThreeList;
 import com.rest.client.ds.RequestPhotoList;
 import com.rest.client.ds.Response;
@@ -50,5 +51,9 @@ public interface Api {
 	Call<PhotoList> getPhotoMonthList( @Body RequestPhotoList requestPhotoList );
 
 	@POST("/last_three_list")
-	Call<PhotoList> getLastThreeList( @Body RequestPhotoLastThreeList requestPhotoList );
+	Call<PhotoList> getPhotoLastThreeList( @Body RequestPhotoLastThreeList requestPhotoList );
+
+
+	@POST("/list")
+	Call<PhotoList> getPhotoList( @Body RequestPhotoDayList requestPhotoList );
 }

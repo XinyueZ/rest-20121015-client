@@ -77,6 +77,7 @@ public final class RequestPhotoList extends RestObject {
 		dbPayLoad.setYear( getYear() );
 		dbPayLoad.setMonth( getMonth() );
 		dbPayLoad.setTimeZone( getTimeZone() );
+		dbPayLoad.setStatus( status );
 		return new RealmObject[] { dbPayLoad };
 	}
 
