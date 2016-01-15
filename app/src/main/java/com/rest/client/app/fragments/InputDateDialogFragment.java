@@ -1,6 +1,8 @@
 package com.rest.client.app.fragments;
 
 
+import java.util.Calendar;
+
 import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
@@ -95,7 +97,18 @@ public final class InputDateDialogFragment extends DialogFragment implements OnC
 
 	private void query() {
 		boolean ok = true;
-		if( mBinding.dateRb.isChecked() ) {
+		if( mBinding.thisMonthRb.isChecked() ) {
+			Calendar calendar = Calendar.getInstance();
+			int      year     = calendar.get( Calendar.YEAR );
+			int      month    = calendar.get( Calendar.MONTH ) + 1;
+			EventBus.getDefault()
+					.post( new SelectDateTime(
+							QUERY_SINGLE_MONTH,
+							year,
+							month
+					) );
+			dismiss();
+		} else if( mBinding.dateRb.isChecked() ) {
 			int year = Integer.valueOf( mBinding.singleYearEt.getText()
 															 .toString() );
 			if( !validateYear( year ) ) {

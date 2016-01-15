@@ -28,6 +28,13 @@
                 android:layout_height="wrap_content">
 
                 <RadioButton
+                    android:id="@+id/this_month_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/lbl_this_month" />
+
+                <RadioButton
                     android:id="@+id/last_three_rb"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

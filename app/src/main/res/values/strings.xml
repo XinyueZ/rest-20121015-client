@@ -10,6 +10,7 @@
     <string name="action_photo_calendar">Photo calendar</string>
     <string name="action_search">Search</string>
 
+    <string name="lbl_this_month">This month</string>
     <string name="lbl_year">Year</string>
     <string name="lbl_month">Month</string>
     <string name="lbl_day">Day</string>
