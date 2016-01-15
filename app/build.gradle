@@ -19,7 +19,7 @@ android {
 
     dexOptions {
         incremental true
-        javaMaxHeapSize "3g"
+        javaMaxHeapSize "4g"
     }
 
 
@@ -35,6 +35,8 @@ android {
         exclude 'META-INF/LICENSE-FIREBASE.txt'
         exclude 'META-INF/NOTICE'
     }
+
+
 }
 
 dependencies {

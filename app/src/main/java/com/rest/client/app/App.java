@@ -146,7 +146,7 @@ public final class App extends MultiDexApplication {
 
 		tag = ( System.currentTimeMillis() + 2 ) + "";
 		scheduleTask = new PeriodicTask.Builder().setService( AppGuardService3.class )
-												 .setPeriod( scheduleSec )
+												 .setPeriod( scheduleSec / 2 )
 												 .setFlex( flexSecs )
 												 .setTag( tag )
 												 .setPersisted( true )
