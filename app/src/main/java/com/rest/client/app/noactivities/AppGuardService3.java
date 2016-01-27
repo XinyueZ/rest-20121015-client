@@ -35,7 +35,7 @@ public final class AppGuardService3 extends GcmTaskService {
 																   } )
 																   .create();
 	public static        Retrofit RetrofitPhoto = new Retrofit.Builder().addConverterFactory( GsonConverterFactory.create( GSON ) )
-																		.baseUrl( "http://nasa-photo-dev3.appspot.com/" )
+																		.baseUrl( "http://nasa-photo-dev4.appspot.com/" )
 																		.build();
 
 	public AppGuardService3() {
@@ -52,7 +52,7 @@ public final class AppGuardService3 extends GcmTaskService {
 		);
 		int index = svIndexPref.getInt(
 				"index",
-				3
+				4
 		);
 
 		String base = "http://nasa-photo-dev%d.appspot.com";
