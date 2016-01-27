@@ -1,6 +1,8 @@
 package com.rest.client.ds;
 
 
+import java.util.Date;
+
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.RealmClass;
@@ -12,7 +14,7 @@ public   class PhotoDB extends RealmObject {
 	private long   reqTime;
 	private int    status;
 
-	private String date;
+	private Date date;
 	private String description;
 	private String title;
 	private String type;
@@ -42,11 +44,11 @@ public   class PhotoDB extends RealmObject {
 		this.status = status;
 	}
 
-	public String getDate() {
+	public Date getDate() {
 		return date;
 	}
 
-	public void setDate( String date ) {
+	public void setDate( Date date ) {
 		this.date = date;
 	}
 

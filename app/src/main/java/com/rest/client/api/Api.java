@@ -13,11 +13,11 @@ import com.rest.client.ds.RequestPhotoLastThreeList;
 import com.rest.client.ds.RequestPhotoList;
 import com.rest.client.ds.Response;
 
-import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
-import retrofit.http.Body;
-import retrofit.http.POST;
+import retrofit2.Call;
+import retrofit2.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.POST;
+import retrofit2.Retrofit;
 
 public interface Api {
 

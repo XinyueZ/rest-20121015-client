@@ -1,6 +1,8 @@
 package com.rest.client.ds;
 
 
+import java.util.Date;
+
 import com.chopping.rest.RestObject;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
@@ -18,7 +20,7 @@ public final class Photo extends RestObject {
 	private String   mDescription;
 	@JsonProperty("date")
 	@SerializedName("date")
-	private String   mDate;
+	private Date     mDate;
 	@JsonProperty("title")
 	@SerializedName("title")
 	private String   mTitle;
@@ -46,11 +48,11 @@ public final class Photo extends RestObject {
 		mDescription = description;
 	}
 
-	public String getDate() {
+	public Date getDate() {
 		return mDate;
 	}
 
-	public void setDate( String date ) {
+	public void setDate( Date date ) {
 		mDate = date;
 	}
 
@@ -114,7 +116,7 @@ public final class Photo extends RestObject {
 				photoDbPayload.setStatus( status );
 				photoDbPayload.setTitle( getTitle() );
 				photoDbPayload.setDescription( getDescription() );
-				photoDbPayload.setDate( getDate() );
+				photoDbPayload.setDate(   getDate()   );
 				photoDbPayload.setUrls( photoUrlDbPayload );
 				photoDbPayload.setType( getType() );
 				break;

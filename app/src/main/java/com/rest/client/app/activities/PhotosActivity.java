@@ -36,6 +36,8 @@ import com.rest.client.ds.PhotoDB;
 
 import io.realm.RealmObject;
 import io.realm.RealmQuery;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
 
 public class PhotosActivity extends RestfulActivity {
@@ -243,6 +245,17 @@ public class PhotosActivity extends RestfulActivity {
 			);
 		}
 	}
+
+
+	@Override
+	protected RealmResults<? extends RealmObject> createQuery( RealmQuery<? extends RealmObject> q ) {
+		RealmResults<? extends RealmObject> results =  q.findAllSortedAsync(
+				"date",
+				Sort.DESCENDING
+		);
+		return results;
+	}
+
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item ) {

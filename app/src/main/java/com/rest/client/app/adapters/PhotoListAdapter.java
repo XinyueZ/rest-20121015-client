@@ -1,5 +1,6 @@
 package com.rest.client.app.adapters;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import android.content.Context;
@@ -103,6 +104,10 @@ public final class PhotoListAdapter<T extends RealmObject> extends RecyclerView.
 				entry
 		);
 
+		holder.mBinding.setVariable(
+				BR.formatter,
+				new SimpleDateFormat( "yyyy-M-d" )
+		);
 
 		holder.mBinding.executePendingBindings();
 	}

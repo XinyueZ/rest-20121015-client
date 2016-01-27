@@ -1,7 +1,10 @@
 package com.rest.client.app.activities;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,14 +16,11 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.LinearLayoutManager;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.chopping.activities.RestfulActivity;
-import com.chopping.rest.ExecutePending;
-import com.chopping.rest.RestObject;
 import com.rest.client.R;
 import com.rest.client.api.Api;
 import com.rest.client.app.App;
@@ -36,6 +36,8 @@ import com.rest.client.ds.RequestPhotoList;
 
 import io.realm.RealmObject;
 import io.realm.RealmQuery;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
 
 public class PhotoCalendarActivity extends RestfulActivity {
@@ -56,7 +58,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 	private int mQueryType;
 
-	private String mKeyword = null;
+	private Date mKeyword = null;
 
 
 	//------------------------------------------------
@@ -69,23 +71,33 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	 * @param e
 	 * 		Event {@link SelectDateTime}.
 	 */
-	public void onEvent( SelectDateTime e ) {
+	public void onEvent( SelectDateTime e ) throws ParseException {
 		mQueryType = e.getQueryType();
 		switch( mQueryType ) {
 			case InputDateDialogFragment.QUERY_DAY:
-				mKeyword = String.format(
+				mKeyword = new SimpleDateFormat( "yyyy-M-d" ).parse( String.format(
 						"%d-%d-%d",
 						e.getYear(),
 						e.getMonth(),
 						e.getDay()
-				);
+				) );
 				break;
 			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
-				mKeyword = String.format(
-						"%d-%d-",
-						e.getYear(),
-						e.getMonth()
+				Calendar calendar = Calendar.getInstance();
+				calendar.set(
+						Calendar.YEAR,
+						e.getYear()
 				);
+				calendar.set(
+						Calendar.MONTH,
+						e.getMonth() - 1
+				);
+				int lastDay = calendar.getActualMaximum( Calendar.DAY_OF_MONTH );
+				calendar.set(
+						Calendar.DAY_OF_MONTH,
+						lastDay
+				);
+				mKeyword = calendar.getTime();
 				break;
 		}
 
@@ -137,14 +149,14 @@ public class PhotoCalendarActivity extends RestfulActivity {
 		);
 	}
 
-	private void loadPhotoList( int year, int month,  String timeZone ) {
+	private void loadPhotoList( int year, int month, String timeZone ) {
 		switch( mQueryType ) {
 			case InputDateDialogFragment.QUERY_DAY:
 				RequestPhotoDayList requestPhotoDayList = new RequestPhotoDayList();
 				requestPhotoDayList.setReqId( UUID.randomUUID()
 												  .toString() );
 				List<String> datetimes = new ArrayList<>();
-				datetimes.add( mKeyword );
+				datetimes.add( new SimpleDateFormat( "yyyy-M-d" ).format( mKeyword ) );
 				requestPhotoDayList.setDateTimes( datetimes );
 				requestPhotoDayList.setTimeZone( timeZone );
 				App.Instance.getApiManager()
@@ -186,29 +198,29 @@ public class PhotoCalendarActivity extends RestfulActivity {
 
 	@Override
 	protected void sendPending() {
-		App.Instance.getApiManager()
-					.executePending(
-							new ExecutePending() {
-								@Override
-								public void executePending( List<RestObject> pendingItems ) {
-									for( RestObject object : pendingItems ) {
-										RequestPhotoList requestPhotoList = (RequestPhotoList) object;
-										App.Instance.getApiManager()
-													.execAsync(
-															AppGuardService3.RetrofitPhoto.create( Api.class )
-																						  .getPhotoMonthList( requestPhotoList ),
-															requestPhotoList
-													);
-									}
-								}
-
-								@Override
-								public RestObject build() {
-									return new RequestPhotoList();
-								}
-							},
-							RestObject.NOT_SYNCED
-					);
+		//		App.Instance.getApiManager()
+		//					.executePending(
+		//							new ExecutePending() {
+		//								@Override
+		//								public void executePending( List<RestObject> pendingItems ) {
+		//									for( RestObject object : pendingItems ) {
+		//										RequestPhotoList requestPhotoList = (RequestPhotoList) object;
+		//										App.Instance.getApiManager()
+		//													.execAsync(
+		//															AppGuardService3.RetrofitPhoto.create( Api.class )
+		//																						  .getPhotoMonthList( requestPhotoList ),
+		//															requestPhotoList
+		//													);
+		//									}
+		//								}
+		//
+		//								@Override
+		//								public RestObject build() {
+		//									return new RequestPhotoList();
+		//								}
+		//							},
+		//							RestObject.NOT_SYNCED
+		//					);
 	}
 
 
@@ -241,7 +253,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	protected void buildQuery( RealmQuery<? extends RealmObject> q ) {
 		switch( mQueryType ) {
 			case InputDateDialogFragment.QUERY_DAY:
-				if( !TextUtils.isEmpty( mKeyword ) ) {
+				if( mKeyword != null ) {
 					q.equalTo(
 							"date",
 							mKeyword
@@ -249,49 +261,83 @@ public class PhotoCalendarActivity extends RestfulActivity {
 				}
 				break;
 			case InputDateDialogFragment.QUERY_SINGLE_MONTH:
-				if( !TextUtils.isEmpty( mKeyword ) ) {
-					q.contains(
+				if( mKeyword != null ) {
+					Calendar calendar = Calendar.getInstance();
+					calendar.set(
+							Calendar.MINUTE,
+							0
+					);
+					calendar.set(
+							Calendar.SECOND,
+							0
+					);
+					calendar.set(
+							Calendar.MILLISECOND,
+							0
+					);
+					calendar.setTime( mKeyword );
+					int lastDay = calendar.getActualMaximum( Calendar.DAY_OF_MONTH );
+					calendar.set(
+							Calendar.DAY_OF_MONTH,
+							lastDay
+					);
+					Date timeMax = calendar.getTime();
+					q.lessThanOrEqualTo(
 							"date",
-							mKeyword
+							timeMax
+					);
+					calendar.set(
+							Calendar.DAY_OF_MONTH,
+							0
+					);
+					Date timeMin = calendar.getTime();
+					q.greaterThanOrEqualTo(
+							"date",
+							timeMin
 					);
 				}
 				break;
 			case InputDateDialogFragment.QUERY_LAST_THREE_DAYS:
 				Calendar calendar = Calendar.getInstance();
-				int year = calendar.get( Calendar.YEAR );
-				int month = calendar.get( Calendar.MONTH ) + 1;
-				int day = calendar.get( Calendar.DAY_OF_MONTH );
-				q.equalTo(
-						"date",
-						year + "-" + month + "-" + day
-				)
-				 .or();
+				calendar.set(
+						Calendar.MINUTE,
+						0
+				);
+				calendar.set(
+						Calendar.SECOND,
+						0
+				);
+				calendar.set(
+						Calendar.MILLISECOND,
+						0
+				);
+				Date timeMax = calendar.getTime();
 				calendar.add(
 						Calendar.DAY_OF_MONTH,
-						-1
+						-3
 				);
-				year = calendar.get( Calendar.YEAR );
-				month = calendar.get( Calendar.MONTH ) + 1;
-				day = calendar.get( Calendar.DAY_OF_MONTH );
-				q.equalTo(
+				Date timeMin = calendar.getTime();
+				q.lessThanOrEqualTo(
 						"date",
-						year + "-" + month + "-" + day
+						timeMax
 				)
-				 .or();
-				calendar.add(
-						Calendar.DAY_OF_MONTH,
-						-1
-				);
-				year = calendar.get( Calendar.YEAR );
-				month = calendar.get( Calendar.MONTH ) + 1;
-				day = calendar.get( Calendar.DAY_OF_MONTH );
-				q.equalTo(
-						"date",
-						year + "-" + month + "-" + day
-				);
+				 .greaterThanOrEqualTo(
+						 "date",
+						 timeMin
+				 );
 				break;
 		}
 	}
+
+	@Override
+	protected RealmResults<? extends RealmObject> createQuery( RealmQuery<? extends RealmObject> q ) {
+		RealmResults<? extends RealmObject> results = q.findAllSortedAsync(
+				"date",
+				Sort.DESCENDING
+		);
+		return results;
+	}
+
 
 	@Override
 	protected void buildViews() {
@@ -366,13 +412,13 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	protected void onCreate( Bundle savedInstanceState ) {
 		mQueryType = InputDateDialogFragment.QUERY_SINGLE_MONTH;
 		Calendar calendar = Calendar.getInstance();
-		int      year     = calendar.get( Calendar.YEAR );
-		int      month    = calendar.get( Calendar.MONTH ) + 1;
-		mKeyword = String.format(
-				"%d-%d-",
-				year,
-				month
+		int      lastDay  = calendar.getActualMaximum( Calendar.DAY_OF_MONTH );
+		calendar.set(
+				Calendar.DAY_OF_MONTH,
+				lastDay
 		);
+		mKeyword = calendar.getTime();
+
 		super.onCreate( savedInstanceState );
 		mBinding.contentSrl.setColorSchemeResources(
 				R.color.color_pocket_1,
