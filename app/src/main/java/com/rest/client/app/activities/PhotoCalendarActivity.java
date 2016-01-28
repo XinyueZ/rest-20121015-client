@@ -432,6 +432,7 @@ public class PhotoCalendarActivity extends RestfulActivity {
 				loadList();
 			}
 		} );
+		mBinding.fab.hide();
 	}
 
 }

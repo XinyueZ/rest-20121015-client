@@ -2,6 +2,8 @@ package com.rest.client.app.activities;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Properties;
 
 import android.app.Activity;
@@ -14,8 +16,10 @@ import android.provider.SearchRecentSuggestions;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.SearchView.OnQueryTextListener;
 import android.text.Html;
@@ -23,6 +27,7 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 
 import com.chopping.activities.RestfulActivity;
@@ -249,7 +254,7 @@ public class PhotosActivity extends RestfulActivity {
 
 	@Override
 	protected RealmResults<? extends RealmObject> createQuery( RealmQuery<? extends RealmObject> q ) {
-		RealmResults<? extends RealmObject> results =  q.findAllSortedAsync(
+		RealmResults<? extends RealmObject> results = q.findAllSortedAsync(
 				"date",
 				Sort.DESCENDING
 		);
@@ -277,6 +282,12 @@ public class PhotosActivity extends RestfulActivity {
 		return super.onOptionsItemSelected( item );
 	}
 
+	//[Begin for detecting scrolling onto bottom]
+	private int mVisibleItemCount;
+	private int mPastVisibleItems;
+	private int mTotalItemCount;
+	private boolean mLoading = true;
+	//[End]
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
@@ -336,7 +347,51 @@ public class PhotosActivity extends RestfulActivity {
 				getString( R.string.suggestion_auth ),
 				SearchSuggestionProvider.MODE
 		);
-
+		mBinding.fab.hide();
+		mBinding.fab.setOnClickListener( new OnClickListener() {
+			@Override
+			public void onClick( View v ) {
+				PhotoDB  photoMax = (PhotoDB) getData().get( getData().size() - 1 );
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime( photoMax.getDate() );
+				calendar.add(
+						Calendar.DAY_OF_MONTH,
+						-1
+				);
+				String s = new SimpleDateFormat( "yyyy-M-d" ).format( calendar.getTime() );
+				sFireMgr.selectAll(
+						Photo.class,
+						"date",
+						s
+				);
+				mBinding.contentSrl.setRefreshing( true );
+				if( mBinding.fab.isShown() ) {
+					mBinding.fab.hide();
+				}
+			}
+		} );
+		mBinding.responsesRv.addOnScrollListener( new RecyclerView.OnScrollListener() {
+			@Override
+			public void onScrolled( RecyclerView recyclerView, int dx, int dy ) {
+				//Calc whether the list has been scrolled on bottom,
+				//this lets app to getting next page.
+				LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+				mVisibleItemCount = linearLayoutManager.getChildCount();
+				mTotalItemCount = linearLayoutManager.getItemCount();
+				mPastVisibleItems = linearLayoutManager.findFirstVisibleItemPosition();
+				if( ViewCompat.getY( recyclerView ) < dy ) {
+					if( ( mVisibleItemCount + mPastVisibleItems ) == mTotalItemCount ) {
+						if( !mBinding.fab.isShown() ) {
+							mBinding.fab.show();
+						}
+					}
+				} else {
+					if( mBinding.fab.isShown() ) {
+						mBinding.fab.hide();
+					}
+				}
+			}
+		} );
 	}
 
 	@Override
