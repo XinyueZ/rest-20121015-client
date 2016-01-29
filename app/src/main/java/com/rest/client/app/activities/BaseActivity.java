@@ -34,6 +34,11 @@ public abstract class BaseActivity extends RestfulActivity {
 	 * Message holder.
 	 */
 	private Snackbar mSnackbar;
+	//[Begin for detecting scrolling onto bottom]
+	private int      mVisibleItemCount;
+	private int      mPastVisibleItems;
+	private int      mTotalItemCount;
+	//[End]
 
 	protected abstract void showCommentDialog();
 
@@ -42,29 +47,48 @@ public abstract class BaseActivity extends RestfulActivity {
 	}
 
 	private void initFAB() {
-		mBinding.fab.setOnClickListener( new View.OnClickListener() {
+		mBinding.addFab.setOnClickListener( new View.OnClickListener() {
 			@Override
 			public void onClick( View view ) {
 				showCommentDialog();
 			}
 		} );
-
 		mBinding.responsesRv.addOnScrollListener( new RecyclerView.OnScrollListener() {
 			@Override
 			public void onScrolled( RecyclerView recyclerView, int dx, int dy ) {
-				float y = ViewCompat.getY( recyclerView );
-				if( y < dy ) {
-					if( mBinding.fab.isShown() ) {
-						mBinding.fab.hide();
+				//Calc whether the list has been scrolled on bottom,
+				//this lets app to getting next page.
+				LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+				mVisibleItemCount = linearLayoutManager.getChildCount();
+				mTotalItemCount = linearLayoutManager.getItemCount();
+				mPastVisibleItems = linearLayoutManager.findFirstVisibleItemPosition();
+				if( ViewCompat.getY( recyclerView ) < dy ) {
+					if( isRefreshable() ) {
+						if( ( mVisibleItemCount + mPastVisibleItems ) == mTotalItemCount ) {
+							if( !mBinding.loadMoreFab.isShown() ) {
+								mBinding.loadMoreFab.show();
+							}
+						}
+					}
+					if( !mBinding.addFab.isShown() ) {
+						mBinding.addFab.show();
 					}
 				} else {
-					if( !mBinding.fab.isShown() ) {
-						mBinding.fab.show();
+					if( mBinding.addFab.isShown() ) {
+						mBinding.addFab.hide();
+					}
+					if( isRefreshable() ) {
+						if( mBinding.loadMoreFab.isShown() ) {
+							mBinding.loadMoreFab.hide();
+						}
 					}
 				}
 			}
-
 		} );
+	}
+
+	protected boolean isRefreshable() {
+		return false;
 	}
 
 	//-------------------------------------------------------------------------
@@ -148,7 +172,6 @@ public abstract class BaseActivity extends RestfulActivity {
 				loadList();
 			}
 		} );
+		mBinding.loadMoreFab.hide();
 	}
-
-
 }

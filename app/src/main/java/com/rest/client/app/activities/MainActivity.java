@@ -4,9 +4,12 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.chopping.rest.ExecutePending;
 import com.chopping.rest.RestObject;
@@ -16,6 +19,7 @@ import com.rest.client.app.fragments.EditCommitDialogFragment;
 import com.rest.client.bus.DeleteEvent;
 import com.rest.client.bus.EditEvent;
 import com.rest.client.ds.Client;
+import com.rest.client.ds.ClientDB;
 import com.rest.client.ds.ClientEditRequest;
 
 
@@ -47,7 +51,6 @@ public class MainActivity extends BaseActivity {
 	public void onEventMainThread( EditEvent e ) {
 		getBinding().getAdapter()
 					.notifyItemChanged( e.getPosition() );
-
 		EditCommitDialogFragment.newInstance(
 				this,
 				new ClientEditRequest().assignFromClient( (Client) new Client().newFromDB( e.getDBObject() ) )
@@ -59,6 +62,12 @@ public class MainActivity extends BaseActivity {
 	}
 
 	//------------------------------------------------
+
+
+	@Override
+	protected boolean isRefreshable() {
+		return true;
+	}
 
 	/**
 	 * Show single instance of {@link MainActivity}
@@ -195,6 +204,25 @@ public class MainActivity extends BaseActivity {
 		return super.onOptionsItemSelected( item );
 	}
 
+
+	@Override
+	public void onCreate( Bundle savedInstanceState ) {
+		super.onCreate( savedInstanceState );
+		getBinding().loadMoreFab.setOnClickListener( new OnClickListener() {
+			@Override
+			public void onClick( View v ) {
+				ClientDB clientMin = (ClientDB) getData().get( getData().size() - 1 );
+				App.Instance.getFireManager()
+							.selectFrom(
+									new Client().newFromDB( clientMin )
+							);
+				getBinding().contentSrl.setRefreshing( true );
+				if( getBinding().loadMoreFab.isShown() ) {
+					getBinding().loadMoreFab.hide();
+				}
+			}
+		} );
+	}
 
 	@Override
 	protected void onDestroy() {

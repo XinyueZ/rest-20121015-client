@@ -2,8 +2,6 @@ package com.rest.client.app.activities;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Properties;
 
 import android.app.Activity;
@@ -286,7 +284,6 @@ public class PhotosActivity extends RestfulActivity {
 	private int mVisibleItemCount;
 	private int mPastVisibleItems;
 	private int mTotalItemCount;
-	private boolean mLoading = true;
 	//[End]
 
 	@Override
@@ -351,19 +348,8 @@ public class PhotosActivity extends RestfulActivity {
 		mBinding.fab.setOnClickListener( new OnClickListener() {
 			@Override
 			public void onClick( View v ) {
-				PhotoDB  photoMax = (PhotoDB) getData().get( getData().size() - 1 );
-				Calendar calendar = Calendar.getInstance();
-				calendar.setTime( photoMax.getDate() );
-				calendar.add(
-						Calendar.DAY_OF_MONTH,
-						-1
-				);
-				String s = new SimpleDateFormat( "yyyy-M-d" ).format( calendar.getTime() );
-				sFireMgr.selectAll(
-						Photo.class,
-						"date",
-						s
-				);
+				PhotoDB  photoMin = (PhotoDB) getData().get( getData().size() - 1 );
+				sFireMgr.selectFrom(new Photo().newFromDB(  photoMin));
 				mBinding.contentSrl.setRefreshing( true );
 				if( mBinding.fab.isShown() ) {
 					mBinding.fab.hide();
