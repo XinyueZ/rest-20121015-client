@@ -384,6 +384,9 @@ public class PhotoCalendarActivity extends RestfulActivity {
 	public boolean onOptionsItemSelected( MenuItem item ) {
 		int id = item.getItemId();
 		switch( id ) {
+			case R.id.action_vector_image:
+				VectorImageActivity.showInstance( this );
+				return true;
 			case R.id.action_fire_example:
 				MainActivity.showInstance( this );
 				return true;

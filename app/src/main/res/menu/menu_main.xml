@@ -2,6 +2,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".app.activities.MainActivity">
+
+    <item
+        android:id="@+id/action_vector_image"
+        android:title="@string/action_vector_image"
+        app:showAsAction="never" />
+
     <item
         android:id="@+id/action_api_example"
         android:title="@string/action_api_demo"

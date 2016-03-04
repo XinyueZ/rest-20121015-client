@@ -188,6 +188,9 @@ public class MainActivity extends BaseActivity {
 	public boolean onOptionsItemSelected( MenuItem item ) {
 		int id = item.getItemId();
 		switch( id ) {
+			case R.id.action_vector_image:
+				VectorImageActivity.showInstance( this );
+				return true;
 			case R.id.action_api_example:
 				MainActivity2.showInstance( this );
 				return true;

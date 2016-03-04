@@ -11,10 +11,12 @@ android {
     defaultConfig {
         multiDexEnabled true
         applicationId "com.rest.client"
-        minSdkVersion 9
+        minSdkVersion 14
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     dexOptions {
@@ -45,9 +47,9 @@ dependencies {
     compile project(':ChoppingBootstrap')
     compile project(':volley_cz')
     compile 'com.android.support:multidex:1.0.1'
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
-    compile 'com.android.support:cardview-v7:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile 'com.android.support:design:23.2.0'
+    compile 'com.android.support:cardview-v7:23.2.0'
     compile('com.google.android.gms:play-services:8.4.0') {
         exclude group: 'com.android.support', module: 'support-v4'
         exclude group: 'com.android.support', module: 'support-v7'
